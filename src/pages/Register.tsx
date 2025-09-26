@@ -24,7 +24,7 @@ const Register = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationClosed, setRegistrationClosed] = useState(false);
-  const [registeredCount, setRegisteredCount] = useState(7); // Start at 7 to show urgency
+  const [registeredCount, setRegisteredCount] = useState(1); // Start at 7 to show urgency
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -405,7 +405,7 @@ const Register = () => {
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     This offer is only available for the first 10 users. After that, 
-                    portfolio websites will cost ₹5000.
+                    portfolio websites will cost ₹999.
                   </p>
                   <div className="text-2xl font-bold text-red-500">
                     {spotsLeft} spots remaining
