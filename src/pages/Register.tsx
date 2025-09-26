@@ -24,7 +24,7 @@ const Register = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationClosed, setRegistrationClosed] = useState(false);
-  const [registeredCount, setRegisteredCount] = useState(1); // Start at 7 to show urgency
+  const [registeredCount, setRegisteredCount] = useState(1); // Start at 1 to show urgency
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -161,7 +161,7 @@ const Register = () => {
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              First 10 users get a completely FREE professional portfolio website worth ₹5000!
+              First 10 users get a completely FREE professional portfolio website worth ₹999!
             </p>
 
             {/* Countdown Timer */}
@@ -362,7 +362,7 @@ const Register = () => {
                     <div>
                       <h4 className="font-semibold">Professional Portfolio Website</h4>
                       <p className="text-sm text-muted-foreground">
-                        Custom-designed portfolio worth ₹5000
+                        Custom-designed portfolio worth ₹999
                       </p>
                     </div>
                   </div>
@@ -451,7 +451,7 @@ const Register = () => {
                   </h4>
                   <p className="text-muted-foreground text-sm">
                     Yes! The first 10 users get a completely FREE portfolio website 
-                    worth ₹5000. No hidden charges, no credit card required.
+                    worth ₹999. No hidden charges, no credit card required.
                   </p>
                 </CardContent>
               </Card>
