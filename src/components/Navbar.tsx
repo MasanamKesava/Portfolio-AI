@@ -8,16 +8,17 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
 
-          const navItems = [
-            { name: "Home", href: "/" },
-            { name: "Portfolio Samples", href: "/products" },
-            { name: "Resume Builder", href: "/resume-builder" },
-            { name: "Register FREE", href: "/register" },
-            { name: "Contact", href: "/contact" },
-          ];
+  const navItems = [
+    { name: "Home", href: "/" },
+    { name: "Portfolio Samples", href: "/products" },
+    { name: "Resume Builder", href: "/resume-builder" },
+    { name: "Register FREE", href: "/register" },
+    { name: "Contact", href: "/contact" },
+  ];
 
   const isActive = (href: string) => location.pathname === href;
-// custom mailto link
+
+  // custom mailto link
   const mailtoAction =
     "mailto:masanamkesava@gmail.com?subject=Hi%20Kesava%20Request%20for%20Website%20Portfolio%20and%20Resume&body=Hi%20Kesava%0D%0A%0D%0AI%20found%20it%20useful%20for%20making%20my%20resume%20and%20portfolio.%20We%20want%20to%20talk%20to%20you.%0D%0A%0D%0ARegards,%0D%0A[Your%20Name]%0D%0A[details]";
 
@@ -83,7 +84,7 @@ const Navbar = () => {
                 asChild
                 className="glass-button"
               >
-                <a href="mailto:masanamkesava@gmail.com">
+                <a href={mailtoAction}>
                   <Mail className="h-4 w-4" />
                 </a>
               </Button>
@@ -156,7 +157,7 @@ const Navbar = () => {
                 asChild
                 className="glass-button"
               >
-                <a href="mailto:masanamkesava@gmail.com">
+                <a href={mailtoAction}>
                   <Mail className="h-4 w-4" />
                 </a>
               </Button>
