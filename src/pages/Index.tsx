@@ -808,7 +808,7 @@ const Index = () => {
               </span>
             </div>
             <p className="text-gray-300 text-sm mt-1 text-center">
-              First 10 users get FREE Portfolio Website worth ₹500. Only 5 days
+              First 10 users get FREE Portfolio Website worth ₹5000. Only 5 days
               left!
             </p>
           </div>
