@@ -207,13 +207,13 @@ const Index = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="text-5xl font-extrabold text-primary">
-                    ₹250
+                    ₹1999
                   </div>
                   <div className="text-2xl text-muted-foreground line-through">
-                    ₹999
+                    ₹5000
                   </div>
                   <Badge className="bg-accent text-white px-3 py-1 text-sm">
-                    75% OFF
+                    60% OFF
                   </Badge>
                 </div>
                 <p className="text-success font-semibold text-[17px]">
