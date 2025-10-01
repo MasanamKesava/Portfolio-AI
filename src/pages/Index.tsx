@@ -344,11 +344,11 @@ const Index = () => {
           <h2 className="text-4xl font-bold mb-8">Special Launch Pricing</h2>
           <div className="glass-card p-9 rounded-3xl max-w-md mx-auto hover-lift">
             <div className="mb-6">
-              <div className="text-6xl font-bold text-accent mb-2">₹250</div>
+              <div className="text-6xl font-bold text-accent mb-2">₹1999</div>
               <div className="text-lg text-muted-foreground line-through">
-                ₹999
+                ₹5000
               </div>
-              <Badge className="bg-accent text-white">75% OFF</Badge>
+              <Badge className="bg-accent text-white">60% OFF</Badge>
             </div>
             <div className="space-y-4 mb-8 text-[16px]">
               <div className="flex items-center justify-center">
