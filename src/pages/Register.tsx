@@ -376,7 +376,7 @@ const Register = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {[
                 ["Is this really FREE?",
-                 "Yes! The first 10 users get a completely FREE portfolio website worth ₹999. No hidden charges, no credit card required."],
+                 "Yes! The first 10 users get a completely FREE portfolio website worth ₹1999. No hidden charges, no credit card required."],
                 ["How long will it take?",
                  "Your portfolio will be ready within 2-3 business days after registration. We'll send you updates via email."],
                 ["What if I'm not satisfied?",
