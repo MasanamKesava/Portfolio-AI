@@ -108,7 +108,7 @@ const Contact = () => {
         "Absolutely! We provide interview preparation, coding practice resources, and placement readiness tracking.",
     },
     {
-      question: "What's included in the ₹250 package?",
+      question: "What's included in the ₹1999 package?",
       answer:
         "Complete portfolio website, AI resume analysis, GitHub integration, and 3 months of support.",
     },
