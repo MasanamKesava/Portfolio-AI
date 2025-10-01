@@ -148,7 +148,7 @@ const Register = () => {
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              First 10 users get a completely FREE professional portfolio website worth ₹999!
+              First 10 users get a completely FREE professional portfolio website worth ₹5000!
             </p>
 
             {/* Countdown */}
