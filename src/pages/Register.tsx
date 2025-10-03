@@ -4,7 +4,7 @@ import {
   User, Mail, Phone, GraduationCap, CheckCircle, Timer, Gift, Users, Sparkles, ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 
 const REGISTERED_COUNT_KEY = "freePortfolio.registeredCount";
-// NOTE: We no longer persist a manual "closed" flag; it derives from count.
 const DEADLINE_KEY = "freePortfolio.deadlineMs";
 
 // Initial visible duration for first-time visitors
@@ -44,22 +43,22 @@ const Register = () => {
 
   // Count drives "closed" state
   const [registeredCount, setRegisteredCount] = useState(1); // default fallback
-  const registrationClosed = registeredCount >= 10; // <-- derived: close only when 10 reached
+  const registrationClosed = registeredCount >= 10; // close only when 10 reached
 
   // --- deadline (persisted) ---
   const [deadlineMs, setDeadlineMs] = useState<number | null>(null);
 
-  // Dummy tick to re-render every second
-  const [, setTick] = useState(0);
+  // Tick to drive the visible countdown each second
+  const [tick, setTick] = useState(0);
 
-  // Derive time left from deadline (memoized)
+  // Derive time left from deadline (memoized; recomputes on every tick)
   const timeLeft = useMemo(() => {
     if (deadlineMs === null) return INITIAL_TIME;
     const remaining = deadlineMs - Date.now();
     return timeLeftFromMs(remaining);
-  }, [deadlineMs]);
+  }, [deadlineMs, tick]);
 
-  // 1) On mount, hydrate state from localStorage
+  // 1) On mount, hydrate state from localStorage (count + one-time deadline)
   useEffect(() => {
     try {
       const savedCount = localStorage.getItem(REGISTERED_COUNT_KEY);
@@ -104,12 +103,17 @@ const Register = () => {
     }
   }, [registeredCount]);
 
-  // 3) Tick every second to refresh the derived time left
+  // 3) Tick every second to refresh the countdown; stop at zero
   useEffect(() => {
     if (deadlineMs === null) return;
     const id = setInterval(() => {
-      // Just trigger a re-render each second
-      setTick((x) => x + 1);
+      const remaining = deadlineMs - Date.now();
+      if (remaining <= 0) {
+        clearInterval(id);
+        setTick((x) => x + 1); // final recompute to show zeros
+      } else {
+        setTick((x) => x + 1);
+      }
     }, 1000);
     return () => clearInterval(id);
   }, [deadlineMs]);
@@ -135,7 +139,7 @@ const Register = () => {
       return;
     }
 
-    // IMPORTANT: Do NOT block on deadline. Countdown is purely informational now.
+    // Countdown is informational; do NOT block on deadline.
 
     setIsSubmitting(true);
     try {
@@ -225,7 +229,6 @@ const Register = () => {
                   <div className="text-sm">Seconds</div>
                 </div>
               </div>
-              {/* Optional tiny note so users know form stays open until 10 are filled */}
               <p className="mt-3 text-xs text-muted-foreground">
                 *Countdown is informational. Registrations close after 10 sign-ups.
               </p>
@@ -252,10 +255,10 @@ const Register = () => {
             <div>
               <Card className="glass-card border-0">
                 <CardHeader>
-                  <CardTitle className="text-2xl font-bold flex items-center">
+                  <div className="text-2xl font-bold flex items-center">
                     <Sparkles className="mr-3 h-6 w-6 text-primary" />
                     {registrationClosed ? "Registration Closed" : "Claim Your FREE Portfolio"}
-                  </CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {registrationClosed ? (
@@ -366,7 +369,7 @@ const Register = () => {
             <div className="space-y-6">
               <Card className="glass-card border-0">
                 <CardHeader>
-                  <CardTitle className="text-xl font-bold">What You Get FREE</CardTitle>
+                  <div className="text-xl font-bold">What You Get FREE</div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {[
@@ -402,7 +405,7 @@ const Register = () => {
 
               <Card className="glass-card border-0">
                 <CardHeader>
-                  <CardTitle className="text-xl font-bold">Success Stories</CardTitle>
+                  <div className="text-xl font-bold">Success Stories</div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="border-l-2 border-primary/20 pl-4">
