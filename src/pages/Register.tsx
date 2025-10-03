@@ -1,4 +1,6 @@
-import { useState, useEffect, useMemo } from "react"; import { Link } from "react-router-dom"; import {
+import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
+import {
   User,
   Mail,
   Phone,
@@ -26,11 +28,11 @@ type Status = {
 };
 
 /** ---- EDIT THESE IF YOUR NAMES DIFFER ---- */
-const REG_TABLE = "free_portfolio_registrations";    // your registrations table name
-const STATUS_TABLE = "free_portfolio_status";        // optional status table if you keep limit/isOpen there
-const RPC_GET_STATUS = "get_free_portfolio_status";  // existing
-const RPC_REGISTER = "register_free_portfolio";      // existing
-const RPC_RESET = "reset_free_portfolio";            // optional recommended RPC
+const REG_TABLE = "free_portfolio_registrations";
+const STATUS_TABLE = "free_portfolio_status"; // if you don’t have this, it just won’t trigger
+const RPC_GET_STATUS = "get_free_portfolio_status";
+const RPC_REGISTER = "register_free_portfolio";
+const RPC_RESET = "reset_free_portfolio"; // optional
 /** ---------------------------------------- */
 
 const DEADLINE_ISO =
@@ -56,22 +58,27 @@ const Register = () => {
   const [limit, setLimit] = useState<number>(10);
   const [isOpen, setIsOpen] = useState<boolean>(true);
 
-  // ✅ ADDED: Loading state to remove blinking glitch
-  const [isStatusLoading, setIsStatusLoading] = useState(true);
-  
-  const registrationClosed = !isOpen || registeredCount >= limit;
+  // ✅ Proper loading gate to prevent flicker of counts
+  const [isStatusLoading, setIsStatusLoading] = useState<boolean>(true);
+
+  // Only compute closed AFTER status loads (prevents header flip-flop)
+  const registrationClosed =
+    !isStatusLoading && (!isOpen || registeredCount >= limit);
+
   const spotsLeft = Math.max(0, limit - registeredCount);
 
-  // Live ticking countdown (re-renders every second)
+  // Live ticking countdown
   const [tick, setTick] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(id);
   }, []);
-  const timeLeft = (() => {
+
+  const timeLeft = useMemo(() => {
     const remaining = Math.max(0, DEADLINE_MS - Date.now());
     return toTimeParts(remaining);
-  })();
+  }, [tick]);
+
   const deadlineStrIST = useMemo(
     () =>
       new Date(DEADLINE_MS).toLocaleString("en-IN", {
@@ -84,37 +91,40 @@ const Register = () => {
 
   // Load + refresh helpers
   const refetchStatus = async () => {
-    const { data, error } = await supabase.rpc(RPC_GET_STATUS);
-    if (error) {
-      console.error("Status error:", error);
-      // fail-open defaults
-      setRegisteredCount(0);
-      setLimit(10);
-      setIsOpen(true);
-      return;
+    try {
+      const { data, error } = await supabase.rpc(RPC_GET_STATUS);
+      if (error) {
+        console.error("Status error:", error);
+        // fail-open defaults
+        setRegisteredCount(0);
+        setLimit(10);
+        setIsOpen(true);
+      } else {
+        const s = data as Status;
+        setRegisteredCount(s?.registeredCount ?? 0);
+        setLimit(s?.limit ?? 10);
+        setIsOpen(!!s?.isOpen);
+      }
+    } finally {
+      setIsStatusLoading(false); // ✅ stop loading no matter what
     }
-    const s = data as Status;
-    setRegisteredCount(s?.registeredCount ?? 0);
-    setLimit(s?.limit ?? 10);
-    setIsOpen(!!s?.isOpen);
   };
 
   // Initial load
   useEffect(() => {
+    setIsStatusLoading(true);
     refetchStatus();
   }, []);
 
-  // Realtime: reflect INSERT/DELETE/UPDATE on registrations & status tables
+  // Realtime: reflect INSERT/DELETE/UPDATE on registrations & optional status tables
   useEffect(() => {
     const channel = supabase
       .channel("free-portfolio-realtime")
-      // any change on registrations table should update count
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: REG_TABLE },
         () => refetchStatus()
       )
-      // if you also edit open/limit in a status table, listen to that too
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: STATUS_TABLE },
@@ -154,7 +164,7 @@ const Register = () => {
 
     setIsSubmitting(true);
     try {
-      // 1) Call Supabase RPC to atomically register + increment counter
+      // 1) Atomic register via RPC
       const { data, error } = await supabase.rpc(RPC_REGISTER, {
         p_name: formData.name,
         p_email: formData.email,
@@ -168,7 +178,6 @@ const Register = () => {
       const ok = data?.ok === true;
       const newCount = Number(data?.registeredCount ?? registeredCount);
       if (!ok) {
-        // Closed or failed
         setRegisteredCount(newCount || registeredCount);
         toast({
           title: "Registration Closed",
@@ -178,10 +187,10 @@ const Register = () => {
         return;
       }
 
-      // 2) Update UI with new global count (also realtime will kick in)
+      // 2) Update UI (realtime will also update others)
       setRegisteredCount(newCount);
 
-      // 3) Optional: forward to Formsubmit (client-side email)
+      // 3) Optional: forward to Formsubmit
       try {
         const submitData = new FormData();
         submitData.append("name", formData.name);
@@ -238,21 +247,8 @@ const Register = () => {
 
   const handleAdminReset = async () => {
     try {
-      // Prefer RPC that resets counters + re-opens registrations
       const { error: rpcErr } = await supabase.rpc(RPC_RESET);
-      if (rpcErr) {
-        console.warn("RPC reset failed, trying table delete fallback:", rpcErr.message);
-
-        // Fallback: delete all registrations (requires permissive RLS for your logged-in role)
-        const { error: delErr } = await supabase
-          .from(REG_TABLE)
-          .delete()
-          .neq("id", 0); // delete all rows
-        if (delErr) throw delErr;
-
-        // If you store limit/isOpen in a status table, you might also update it via another RPC here.
-      }
-
+      if (rpcErr) throw rpcErr;
       await refetchStatus();
       toast({
         title: "Reset complete",
@@ -323,31 +319,35 @@ const Register = () => {
               </p>
             </div>
 
-            {/* Spots */}
+            {/* Spots (no-flicker: keep layout, hide numbers until loaded) */}
             <div className="flex items-center justify-center gap-4 mb-8">
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
-                <span className="text-lg font-semibold">
+                <span
+                  className="text-lg font-semibold inline-block"
+                  style={{ visibility: isStatusLoading ? "hidden" : "visible" }}
+                >
                   {registeredCount}/{limit} Registered
                 </span>
+                {/* Reserve space when loading to avoid layout shift */}
+                {isStatusLoading && (
+                  <span className="text-lg font-semibold inline-block opacity-0 select-none">
+                    00/00 Registered
+                  </span>
+                )}
               </div>
-              <div className="text-accent font-bold text-lg">
+              <div
+                className="text-accent font-bold text-lg"
+                style={{ visibility: isStatusLoading ? "hidden" : "visible" }}
+              >
                 Only {spotsLeft} spots left!
               </div>
+              {isStatusLoading && (
+                <div className="text-accent font-bold text-lg opacity-0 select-none">
+                  Only 00 spots left!
+                </div>
+              )}
             </div>
-
-            {/* Admin-only reset control (hidden by default) */}
-            {isAdmin && (
-              <div className="flex justify-center">
-                <Button
-                  type="button"
-                  onClick={handleAdminReset}
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                >
-                  Admin: Reset Registrations
-                </Button>
-              </div>
-            )}
           </div>
         </section>
 
@@ -359,11 +359,14 @@ const Register = () => {
                 <CardHeader>
                   <CardTitle className="text-2xl font-bold flex items-center">
                     <Sparkles className="mr-3 h-6 w-6 text-primary" />
-                    {registrationClosed ? "Registration Closed" : "Claim Your FREE Portfolio"}
+                    {/* Keep it open visually until status known to avoid flicker */}
+                    {!isStatusLoading && registrationClosed
+                      ? "Registration Closed"
+                      : "Claim Your FREE Portfolio"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {registrationClosed ? (
+                  {!isStatusLoading && registrationClosed ? (
                     <div className="text-center py-8">
                       <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
                       <h3 className="text-xl font-bold mb-2">Registration Closed!</h3>
@@ -526,9 +529,18 @@ const Register = () => {
                     This offer is only available for the first {limit} users. After that,
                     portfolio websites will cost ₹5000.
                   </p>
-                  <div className="text-2xl font-bold text-red-500">
+                  {/* Keep layout; hide number while loading */}
+                  <div
+                    className="text-2xl font-bold text-red-500"
+                    style={{ visibility: isStatusLoading ? "hidden" : "visible" }}
+                  >
                     {spotsLeft} spots remaining
                   </div>
+                  {isStatusLoading && (
+                    <div className="text-2xl font-bold text-red-500 opacity-0 select-none">
+                      00 spots remaining
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
