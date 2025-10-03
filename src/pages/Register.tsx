@@ -290,7 +290,7 @@ const Register = () => {
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              First 10 users get a completely FREE professional portfolio website worth ₹999!
+              First 10 users get a completely FREE professional portfolio website worth ₹5000!
             </p>
 
             {/* Global Countdown (IST) */}
@@ -501,7 +501,7 @@ const Register = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {[
-                    ["Professional Portfolio Website", "Custom-designed portfolio worth ₹999"],
+                    ["Professional Portfolio Website", "Custom-designed portfolio worth ₹5000"],
                     ["AI Resume Analysis", "Get intelligent feedback on your resume"],
                     ["GitHub Integration", "Showcase your projects automatically"],
                     ["3 Months Support", "Free updates and maintenance"],
@@ -523,7 +523,7 @@ const Register = () => {
                   <h3 className="text-lg font-bold mb-2 text-red-500">⚡ Limited Time Only!</h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     This offer is only available for the first {limit} users. After that,
-                    portfolio websites will cost ₹999.
+                    portfolio websites will cost ₹5000.
                   </p>
                   <div className="text-2xl font-bold text-red-500">
                     {spotsLeft} spots remaining
@@ -564,7 +564,7 @@ const Register = () => {
               {[
                 [
                   "Is this really FREE?",
-                  "Yes! The first 10 users get a completely FREE portfolio website worth ₹999. No hidden charges, no credit card required.",
+                  "Yes! The first 10 users get a completely FREE portfolio website worth ₹5000. No hidden charges, no credit card required.",
                 ],
                 [
                   "How long will it take?",
