@@ -1,0 +1,4 @@
+[submodule "Portfolio-AI"]
+    path = Portfolio-AI
+    url = https://github.com/MasanamKesava/Portfolio-AI.git
+    branch = main   # or master, if that repo uses master
