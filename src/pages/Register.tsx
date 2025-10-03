@@ -28,18 +28,21 @@ const DEADLINE_ISO =
   import.meta.env.VITE_COUNTDOWN_DEADLINE || "2025-10-10T00:00:00+05:30";
 const DEADLINE_MS = new Date(DEADLINE_ISO).getTime();
 
-/** Lock width + tabular digits so only the glyphs swap (no layout shift) */
+/** Single-digit display (no zero-padding) but width reserved to avoid flicker */
 function Digit({ value, maxDigits }: { value: number; maxDigits: number }) {
-  const text = String(value).padStart(maxDigits, "0");
   return (
     <span
-      className="inline-block font-mono tabular-nums tracking-tight transition-opacity duration-100"
-      style={{ minWidth: `${maxDigits}ch` }}
+      className="inline-block font-mono tabular-nums tracking-tight"
+      style={{
+        minWidth: `${maxDigits}ch`, // keeps layout stable
+        textAlign: "right",         // right-align without adding zeros
+      }}
     >
-      {text}
+      {String(value)}
     </span>
   );
 }
+
 
 function toTimeParts(ms: number) {
   if (ms <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
