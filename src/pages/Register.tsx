@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   User, Mail, Phone, GraduationCap, CheckCircle, Timer, Gift, Users, Sparkles, ArrowRight,
@@ -13,20 +13,14 @@ import Navbar from "@/components/Navbar";
 
 const REGISTERED_COUNT_KEY = "freePortfolio.registeredCount";
 const REGISTRATION_CLOSED_KEY = "freePortfolio.registrationClosed";
+const DEADLINE_KEY = "freePortfolio.deadlineMs";
 
-// --- Option 1: Global countdown ---
-// Use current time + fixed duration for everyone
-const OFFER_DURATION_MS =
-  5 * 24 * 60 * 60 * 1000 + // 5 days
-  12 * 60 * 60 * 1000 +     // 12 hours
-  30 * 60 * 1000 +          // 30 minutes
-  45 * 1000;                // 45 seconds
-
-const GLOBAL_DEADLINE_MS = Date.now() + OFFER_DURATION_MS;
+// Initial visible duration for first-time visitors
+const INITIAL_TIME = { days: 5, hours: 12, minutes: 30, seconds: 45 };
 
 function timeLeftFromMs(ms: number) {
-  if (ms <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-  const totalSeconds = Math.floor(ms / 1000);
+  const safeMs = Math.max(0, ms);
+  const totalSeconds = Math.floor(safeMs / 1000);
   const days = Math.floor(totalSeconds / 86400);
   const hours = Math.floor((totalSeconds % 86400) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -34,45 +28,106 @@ function timeLeftFromMs(ms: number) {
   return { days, hours, minutes, seconds };
 }
 
+function initialDurationMs() {
+  const { days, hours, minutes, seconds } = INITIAL_TIME;
+  return (
+    days * 24 * 60 * 60 * 1000 +
+    hours * 60 * 60 * 1000 +
+    minutes * 60 * 1000 +
+    seconds * 1000
+  );
+}
+
 const Register = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationClosed, setRegistrationClosed] = useState(false);
   const [registeredCount, setRegisteredCount] = useState(1); // default fallback
+
+  // Persisted deadline (absolute timestamp in ms)
+  const [deadlineMs, setDeadlineMs] = useState<number | null>(null);
+
+  // "now" ticks every second to drive the countdown UI
+  const [now, setNow] = useState<number>(Date.now());
+
+  // Form state
   const [formData, setFormData] = useState({
     name: "", email: "", phone: "", college: "", course: "",
   });
-  const [timeLeft, setTimeLeft] = useState(() => timeLeftFromMs(GLOBAL_DEADLINE_MS - Date.now()));
 
-  // Hydrate count/closed from localStorage
+  // Derive time left from deadline and "now"
+  const timeLeft = useMemo(() => {
+    if (deadlineMs === null) return INITIAL_TIME;
+    return timeLeftFromMs(deadlineMs - now);
+  }, [deadlineMs, now]);
+
+  // 1) On mount, hydrate state from localStorage (count/closed/deadline)
   useEffect(() => {
     try {
       const savedCount = localStorage.getItem(REGISTERED_COUNT_KEY);
       const savedClosed = localStorage.getItem(REGISTRATION_CLOSED_KEY);
+      const savedDeadline = localStorage.getItem(DEADLINE_KEY);
+
       if (savedCount !== null) {
         const n = parseInt(savedCount, 10);
         if (!Number.isNaN(n)) setRegisteredCount(n);
       }
-      if (savedClosed !== null) setRegistrationClosed(savedClosed === "true");
-    } catch {}
+      if (savedClosed !== null) {
+        setRegistrationClosed(savedClosed === "true");
+      }
+
+      if (savedDeadline) {
+        const parsed = parseInt(savedDeadline, 10);
+        if (!Number.isNaN(parsed)) {
+          setDeadlineMs(parsed);
+        } else {
+          // Corrupt value → reset
+          const d = Date.now() + initialDurationMs();
+          localStorage.setItem(DEADLINE_KEY, String(d));
+          setDeadlineMs(d);
+        }
+      } else {
+        // First visit → set new deadline
+        const d = Date.now() + initialDurationMs();
+        localStorage.setItem(DEADLINE_KEY, String(d));
+        setDeadlineMs(d);
+      }
+    } catch {
+      // ignore storage errors (private mode, etc.)
+      if (deadlineMs === null) {
+        const d = Date.now() + initialDurationMs();
+        setDeadlineMs(d);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist count/closed changes
+  // 2) Persist count/closed to localStorage when they change
   useEffect(() => {
     try {
       localStorage.setItem(REGISTERED_COUNT_KEY, String(registeredCount));
       localStorage.setItem(REGISTRATION_CLOSED_KEY, String(registrationClosed));
-    } catch {}
+    } catch {
+      // ignore storage errors
+    }
   }, [registeredCount, registrationClosed]);
 
-  // Countdown interval
+  // 3) Interval: advance "now" every second so countdown updates continuously
   useEffect(() => {
-    const interval = setInterval(() => {
-      const remaining = GLOBAL_DEADLINE_MS - Date.now();
-      setTimeLeft(timeLeftFromMs(Math.max(0, remaining)));
+    if (deadlineMs === null) return;
+    const id = setInterval(() => {
+      setNow(Date.now());
     }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+    return () => clearInterval(id);
+  }, [deadlineMs]);
+
+  // 4) Optional: auto-close when the timer ends (kept separate & cheap)
+  useEffect(() => {
+    if (deadlineMs !== null && deadlineMs - now <= 0 && !registrationClosed) {
+      // If you want to auto-close the offer when it ends, uncomment:
+      // setRegistrationClosed(true);
+    }
+  }, [deadlineMs, now, registrationClosed]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((s) => ({ ...s, [e.target.name]: e.target.value }));
@@ -90,7 +145,8 @@ const Register = () => {
       return;
     }
 
-    if (GLOBAL_DEADLINE_MS - Date.now() <= 0) {
+    // If timer elapsed, block new registrations
+    if (deadlineMs !== null && deadlineMs - now <= 0) {
       toast({
         title: "Offer Ended",
         description: "The limited-time offer has expired.",
@@ -107,24 +163,9 @@ const Register = () => {
       submitData.append("phone", formData.phone);
       submitData.append("college", formData.college);
       submitData.append("course", formData.course);
-      submitData.append("_subject", `🎉 New Registration - FREE Portfolio Website Offer!`);
+      submitData.append("_subject", "🎉 New Registration - FREE Portfolio Website Offer!");
       submitData.append("_template", "table");
       submitData.append("_captcha", "false");
-
-      // Autoresponse message
-      submitData.append("_autoresponse", `
-Subject: Thank You for Your Interest, ${formData.name}! Your Request is Confirmed!
-
-Body:
-
-Thank you for your request! We have received your information and will contact you shortly.
-
-Your Free Website Portfolio and ATS-Friendly Resume are now in process, and you can expect to receive them soon.
-
-If you are happy with our service, we would be grateful if you could share this opportunity with your friends.
-
-Best regards,
-      `.trim());
 
       const response = await fetch("https://formsubmit.co/masanamkesava@gmail.com", {
         method: "POST",
@@ -138,8 +179,8 @@ Best regards,
       if (newCount >= 10) setRegistrationClosed(true);
 
       toast({
-        title: "Registration Successful! 🎉",
-        description: "You'll receive your FREE portfolio website details via email within 24 hours.",
+        title: "Message Sent!",
+        description: "We'll get back to you within 24 hours.",
       });
 
       setFormData({ name: "", email: "", phone: "", college: "", course: "" });
@@ -166,7 +207,8 @@ Best regards,
           <div className="max-w-4xl mx-auto text-center">
             <div className="flex justify-center mb-6">
               <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-2 text-lg">
-                <Gift className="h-5 w-5 mr-2" /> LIMITED TIME OFFER
+                <Gift className="h-5 w-5 mr-2" />
+                LIMITED TIME OFFER
               </Badge>
             </div>
 
@@ -185,12 +227,22 @@ Best regards,
                 <span className="text-lg font-semibold">Offer Ends In:</span>
               </div>
               <div className="grid grid-cols-4 gap-4 text-center">
-                {["days","hours","minutes","seconds"].map((key) => (
-                  <div key={key} className="bg-gradient-primary p-3 rounded-lg text-white">
-                    <div className="text-2xl font-bold">{timeLeft[key as keyof typeof timeLeft]}</div>
-                    <div className="text-sm">{key.charAt(0).toUpperCase() + key.slice(1)}</div>
-                  </div>
-                ))}
+                <div className="bg-gradient-primary p-3 rounded-lg text-white">
+                  <div className="text-2xl font-bold">{timeLeft.days}</div>
+                  <div className="text-sm">Days</div>
+                </div>
+                <div className="bg-gradient-primary p-3 rounded-lg text-white">
+                  <div className="text-2xl font-bold">{timeLeft.hours}</div>
+                  <div className="text-sm">Hours</div>
+                </div>
+                <div className="bg-gradient-primary p-3 rounded-lg text-white">
+                  <div className="text-2xl font-bold">{timeLeft.minutes}</div>
+                  <div className="text-sm">Minutes</div>
+                </div>
+                <div className="bg-gradient-primary p-3 rounded-lg text-white">
+                  <div className="text-2xl font-bold">{timeLeft.seconds}</div>
+                  <div className="text-sm">Seconds</div>
+                </div>
               </div>
             </div>
 
@@ -198,14 +250,17 @@ Best regards,
             <div className="flex items-center justify-center gap-4 mb-8">
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
-                <span className="text-lg font-semibold">{registeredCount}/10 Registered</span>
+                <span className="text-lg font-semibold">
+                  {registeredCount}/10 Registered
+                </span>
               </div>
-              <div className="text-accent font-bold text-lg">Only {spotsLeft} spots left!</div>
+              <div className="text-accent font-bold text-lg">
+                Only {spotsLeft} spots left!
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Form & Sidebar */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Form */}
@@ -234,25 +289,61 @@ Best regards,
                     </div>
                   ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
-                      {[
-                        { label: "Full Name *", name: "name", icon: User, placeholder: "Enter your full name", type: "text" },
-                        { label: "Email Address *", name: "email", icon: Mail, placeholder: "your.email@example.com", type: "email" },
-                        { label: "Phone Number *", name: "phone", icon: Phone, placeholder: "+91 XXXXX XXXXX", type: "tel" },
-                        { label: "College/University *", name: "college", icon: GraduationCap, placeholder: "Your college/university name", type: "text" },
-                      ].map(({label,name,icon:Icon,placeholder,type}) => (
-                        <div key={name}>
-                          <Label htmlFor={name} className="block text-sm font-medium mb-2">{label}</Label>
-                          <div className="relative">
-                            <Icon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              id={name} name={name} type={type} required
-                              value={formData[name as keyof typeof formData]}
-                              onChange={handleInputChange}
-                              className="glass-card pl-10" placeholder={placeholder}
-                            />
-                          </div>
+                      <div>
+                        <Label htmlFor="name" className="block text-sm font-medium mb-2">
+                          Full Name *
+                        </Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="name" name="name" type="text" required
+                            value={formData.name} onChange={handleInputChange}
+                            className="glass-card pl-10" placeholder="Enter your full name"
+                          />
                         </div>
-                      ))}
+                      </div>
+
+                      <div>
+                        <Label htmlFor="email" className="block text-sm font-medium mb-2">
+                          Email Address *
+                        </Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="email" name="email" type="email" required
+                            value={formData.email} onChange={handleInputChange}
+                            className="glass-card pl-10" placeholder="your.email@example.com"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="phone" className="block text-sm font-medium mb-2">
+                          Phone Number *
+                        </Label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="phone" name="phone" type="tel" required
+                            value={formData.phone} onChange={handleInputChange}
+                            className="glass-card pl-10" placeholder="+91 XXXXX XXXXX"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="college" className="block text-sm font-medium mb-2">
+                          College/University *
+                        </Label>
+                        <div className="relative">
+                          <GraduationCap className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="college" name="college" type="text" required
+                            value={formData.college} onChange={handleInputChange}
+                            className="glass-card pl-10" placeholder="Your college/university name"
+                          />
+                        </div>
+                      </div>
 
                       <div>
                         <Label htmlFor="course" className="block text-sm font-medium mb-2">
