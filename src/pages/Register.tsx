@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 
 const REGISTERED_COUNT_KEY = "freePortfolio.registeredCount";
-const REGISTRATION_CLOSED_KEY = "freePortfolio.registrationClosed";
+// NOTE: We no longer persist a manual "closed" flag; it derives from count.
 const DEADLINE_KEY = "freePortfolio.deadlineMs";
 
 // Initial visible duration for first-time visitors
@@ -41,11 +41,16 @@ function initialDurationMs() {
 const Register = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [registrationClosed, setRegistrationClosed] = useState(false);
+
+  // Count drives "closed" state
   const [registeredCount, setRegisteredCount] = useState(1); // default fallback
+  const registrationClosed = registeredCount >= 10; // <-- derived: close only when 10 reached
 
   // --- deadline (persisted) ---
   const [deadlineMs, setDeadlineMs] = useState<number | null>(null);
+
+  // Dummy tick to re-render every second
+  const [, setTick] = useState(0);
 
   // Derive time left from deadline (memoized)
   const timeLeft = useMemo(() => {
@@ -58,15 +63,11 @@ const Register = () => {
   useEffect(() => {
     try {
       const savedCount = localStorage.getItem(REGISTERED_COUNT_KEY);
-      const savedClosed = localStorage.getItem(REGISTRATION_CLOSED_KEY);
       const savedDeadline = localStorage.getItem(DEADLINE_KEY);
 
       if (savedCount !== null) {
         const n = parseInt(savedCount, 10);
         if (!Number.isNaN(n)) setRegisteredCount(n);
-      }
-      if (savedClosed !== null) {
-        setRegistrationClosed(savedClosed === "true");
       }
 
       if (savedDeadline) {
@@ -74,13 +75,13 @@ const Register = () => {
         if (!Number.isNaN(parsed)) {
           setDeadlineMs(parsed);
         } else {
-          // Corrupt value → reset
+          // Corrupt value → reset once
           const d = Date.now() + initialDurationMs();
           localStorage.setItem(DEADLINE_KEY, String(d));
           setDeadlineMs(d);
         }
       } else {
-        // First visit → set new deadline
+        // First visit → set new deadline once; persists so it won't reset on refresh
         const d = Date.now() + initialDurationMs();
         localStorage.setItem(DEADLINE_KEY, String(d));
         setDeadlineMs(d);
@@ -94,50 +95,37 @@ const Register = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 2) Persist count/closed to localStorage when they change
+  // 2) Persist count when it changes
   useEffect(() => {
     try {
       localStorage.setItem(REGISTERED_COUNT_KEY, String(registeredCount));
-      localStorage.setItem(REGISTRATION_CLOSED_KEY, String(registrationClosed));
     } catch {
       // ignore storage errors
     }
-  }, [registeredCount, registrationClosed]);
+  }, [registeredCount]);
 
   // 3) Tick every second to refresh the derived time left
   useEffect(() => {
     if (deadlineMs === null) return;
     const id = setInterval(() => {
-      const remaining = deadlineMs - Date.now();
-      if (remaining <= 0) {
-        clearInterval(id);
-        // Optional: auto-close registration when the timer ends
-        // setRegistrationClosed(true);
-        // Ensure timeLeft shows zeros on next render (deadlineMs stays same; derived becomes zeros)
-      } else {
-        // trigger re-render by updating a no-op state? Not needed:
-        // we rely on deadlineMs in deps; to force tick, we can update a dummy state.
-        // Simpler: use a state to cause re-render each second:
-        setTick((x) => x + 1);
-      }
+      // Just trigger a re-render each second
+      setTick((x) => x + 1);
     }, 1000);
     return () => clearInterval(id);
   }, [deadlineMs]);
-
-  // Dummy tick to re-render every second
-  const [, setTick] = useState(0);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((s) => ({ ...s, [e.target.name]: e.target.value }));
-  };
 
   const [formData, setFormData] = useState({
     name: "", email: "", phone: "", college: "", course: "",
   });
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((s) => ({ ...s, [e.target.name]: e.target.value }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // CLOSE ONLY IF 10 REACHED
     if (registrationClosed) {
       toast({
         title: "Registration Closed",
@@ -147,15 +135,7 @@ const Register = () => {
       return;
     }
 
-    // If timer elapsed, optionally block new registrations
-    if (deadlineMs !== null && deadlineMs - Date.now() <= 0) {
-      toast({
-        title: "Offer Ended",
-        description: "The limited-time offer has expired.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // IMPORTANT: Do NOT block on deadline. Countdown is purely informational now.
 
     setIsSubmitting(true);
     try {
@@ -178,7 +158,6 @@ const Register = () => {
 
       const newCount = registeredCount + 1;
       setRegisteredCount(newCount);
-      if (newCount >= 10) setRegistrationClosed(true);
 
       toast({
         title: "Message Sent!",
@@ -222,7 +201,7 @@ const Register = () => {
               First 10 users get a completely FREE professional portfolio website worth ₹999!
             </p>
 
-            {/* Countdown */}
+            {/* Countdown (informational only) */}
             <div className="glass-card p-6 rounded-2xl max-w-2xl mx-auto mb-8">
               <div className="flex items-center justify-center mb-4">
                 <Timer className="h-6 w-6 text-accent mr-2" />
@@ -246,6 +225,10 @@ const Register = () => {
                   <div className="text-sm">Seconds</div>
                 </div>
               </div>
+              {/* Optional tiny note so users know form stays open until 10 are filled */}
+              <p className="mt-3 text-xs text-muted-foreground">
+                *Countdown is informational. Registrations close after 10 sign-ups.
+              </p>
             </div>
 
             {/* Spots */}
