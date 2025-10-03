@@ -4,7 +4,7 @@ import {
   User, Mail, Phone, GraduationCap, CheckCircle, Timer, Gift, Users, Sparkles, ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -18,23 +18,16 @@ const Register = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationClosed, setRegistrationClosed] = useState(false);
-  const [registeredCount, setRegisteredCount] = useState(1);
+  const [registeredCount, setRegisteredCount] = useState(1); // default fallback
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    college: "",
-    course: "",
+    name: "", email: "", phone: "", college: "", course: "",
   });
 
   const [timeLeft, setTimeLeft] = useState({
-    days: 5,
-    hours: 12,
-    minutes: 30,
-    seconds: 45,
+    days: 5, hours: 12, minutes: 30, seconds: 45,
   });
 
-  // Hydrate from localStorage on mount
+  // 1) On mount, hydrate state from localStorage
   useEffect(() => {
     try {
       const savedCount = localStorage.getItem(REGISTERED_COUNT_KEY);
@@ -48,21 +41,21 @@ const Register = () => {
         setRegistrationClosed(savedClosed === "true");
       }
     } catch {
-      // ignore
+      // ignore storage errors (private mode, etc.)
     }
   }, []);
 
-  // Persist to localStorage
+  // 2) Whenever these change, persist to localStorage
   useEffect(() => {
     try {
       localStorage.setItem(REGISTERED_COUNT_KEY, String(registeredCount));
       localStorage.setItem(REGISTRATION_CLOSED_KEY, String(registrationClosed));
     } catch {
-      // ignore
+      // ignore storage errors
     }
   }, [registeredCount, registrationClosed]);
 
-  // Countdown Timer
+  // Countdown timer
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -80,7 +73,6 @@ const Register = () => {
     setFormData((s) => ({ ...s, [e.target.name]: e.target.value }));
   };
 
-  // ✅ Modified handleSubmit with autoresponse
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -97,32 +89,29 @@ const Register = () => {
     try {
       const submitData = new FormData();
       submitData.append("name", formData.name);
-      submitData.append("email", formData.email);
+      submitData.append("email", formData.email); // required for autoresponse
       submitData.append("phone", formData.phone);
       submitData.append("college", formData.college);
       submitData.append("course", formData.course);
-
-      // Email you receive
       submitData.append("_subject", "🎉 New Registration - FREE Portfolio Website Offer!");
       submitData.append("_template", "table");
       submitData.append("_captcha", "false");
 
-      // ✅ Auto-response to user
-      const autoResponseMessage = `
-Subject: Thank You for Your Interest, ${formData.name}! Your Request is Confirmed!
+      // 🔔 Auto-response to the user's email (FormSubmit reads _autoresponse as the email body)
+      const userDisplayName = formData.name?.trim() || "there";
+      const autoResponseMsg =
+`Subject: Thank You for Your Interest, ${userDisplayName}! Your Request is Confirmed! 
 
 Body:
+
 Thank you for your request! We have received your information and will contact you shortly.
 
 Your Free Website Portfolio and ATS-Friendly Resume are now in process, and you can expect to receive them soon.
 
 If you are happy with our service, we would be grateful if you could share this opportunity with your friends.
 
-Best regards,
-The Smart Portfolio Team
-      `.trim();
-
-      submitData.append("_autoresponse", autoResponseMessage);
+Best regards,`;
+      submitData.append("_autoresponse", autoResponseMsg);
 
       const response = await fetch("https://formsubmit.co/masanamkesava@gmail.com", {
         method: "POST",
@@ -204,7 +193,7 @@ The Smart Portfolio Team
               </div>
             </div>
 
-            {/* Spots Left */}
+            {/* Spots */}
             <div className="flex items-center justify-center gap-4 mb-8">
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
@@ -224,17 +213,16 @@ The Smart Portfolio Team
             {/* Form */}
             <div>
               <Card className="glass-card border-0">
-                <CardHeader>
-                  <CardTitle className="text-2xl font-bold flex items-center">
+                <CardContent className="p-6">
+                  <h3 className="text-2xl font-bold flex items-center mb-6">
                     <Sparkles className="mr-3 h-6 w-6 text-primary" />
                     {registrationClosed ? "Registration Closed" : "Claim Your FREE Portfolio"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                  </h3>
+
                   {registrationClosed ? (
                     <div className="text-center py-8">
                       <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                      <h3 className="text-xl font-bold mb-2">Registration Closed!</h3>
+                      <h4 className="text-xl font-bold mb-2">Registration Closed!</h4>
                       <p className="text-muted-foreground mb-6">
                         We've reached our limit of 10 FREE portfolio websites.
                         Thank you for your interest!
@@ -254,33 +242,23 @@ The Smart Portfolio Team
                         <div className="relative">
                           <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
-                            id="name"
-                            name="name"
-                            type="text"
-                            required
-                            value={formData.name}
-                            onChange={handleInputChange}
-                            className="glass-card pl-10"
-                            placeholder="Enter your full name"
+                            id="name" name="name" type="text" required
+                            value={formData.name} onChange={handleInputChange}
+                            className="glass-card pl-10" placeholder="Enter your full name"
                           />
                         </div>
                       </div>
 
                       <div>
                         <Label htmlFor="email" className="block text-sm font-medium mb-2">
-                          Email Address *
+                          Email Address * (for confirmation)
                         </Label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            required
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            className="glass-card pl-10"
-                            placeholder="your.email@example.com"
+                            id="email" name="email" type="email" required
+                            value={formData.email} onChange={handleInputChange}
+                            className="glass-card pl-10" placeholder="your.email@example.com"
                           />
                         </div>
                       </div>
@@ -292,14 +270,9 @@ The Smart Portfolio Team
                         <div className="relative">
                           <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
-                            id="phone"
-                            name="phone"
-                            type="tel"
-                            required
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            className="glass-card pl-10"
-                            placeholder="+91 XXXXX XXXXX"
+                            id="phone" name="phone" type="tel" required
+                            value={formData.phone} onChange={handleInputChange}
+                            className="glass-card pl-10" placeholder="+91 XXXXX XXXXX"
                           />
                         </div>
                       </div>
@@ -311,14 +284,9 @@ The Smart Portfolio Team
                         <div className="relative">
                           <GraduationCap className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
-                            id="college"
-                            name="college"
-                            type="text"
-                            required
-                            value={formData.college}
-                            onChange={handleInputChange}
-                            className="glass-card pl-10"
-                            placeholder="Your college/university name"
+                            id="college" name="college" type="text" required
+                            value={formData.college} onChange={handleInputChange}
+                            className="glass-card pl-10" placeholder="Your college/university name"
                           />
                         </div>
                       </div>
@@ -328,20 +296,14 @@ The Smart Portfolio Team
                           Course/Major *
                         </Label>
                         <Input
-                          id="course"
-                          name="course"
-                          type="text"
-                          required
-                          value={formData.course}
-                          onChange={handleInputChange}
-                          className="glass-card"
-                          placeholder="e.g., Computer Science, IT, etc."
+                          id="course" name="course" type="text" required
+                          value={formData.course} onChange={handleInputChange}
+                          className="glass-card" placeholder="e.g., Computer Science, IT, etc."
                         />
                       </div>
 
                       <Button
-                        type="submit"
-                        disabled={isSubmitting}
+                        type="submit" disabled={isSubmitting}
                         className="w-full bg-gradient-primary hover:opacity-90 text-white shadow-glow text-lg py-3"
                       >
                         {isSubmitting ? "Registering..." : (
@@ -364,10 +326,8 @@ The Smart Portfolio Team
             {/* Sidebar */}
             <div className="space-y-6">
               <Card className="glass-card border-0">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold">What You Get FREE</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="p-6">
+                  <h4 className="text-xl font-bold mb-4">What You Get FREE</h4>
                   {[
                     ["Professional Portfolio Website", "Custom-designed portfolio worth ₹999"],
                     ["AI Resume Analysis", "Get intelligent feedback on your resume"],
@@ -377,7 +337,7 @@ The Smart Portfolio Team
                     <div key={title} className="flex items-start space-x-3">
                       <CheckCircle className="h-5 w-5 text-success mt-0.5" />
                       <div>
-                        <h4 className="font-semibold">{title}</h4>
+                        <h5 className="font-semibold">{title}</h5>
                         <p className="text-sm text-muted-foreground">{desc}</p>
                       </div>
                     </div>
@@ -400,17 +360,15 @@ The Smart Portfolio Team
               </Card>
 
               <Card className="glass-card border-0">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold">Success Stories</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="p-6">
+                  <h4 className="text-xl font-bold mb-4">Success Stories</h4>
                   <div className="border-l-2 border-primary/20 pl-4">
                     <p className="text-sm text-muted-foreground">
                       "Got my dream job at Microsoft thanks to my portfolio!"
                     </p>
                     <p className="text-xs font-semibold mt-1">- Priya, Software Engineer</p>
                   </div>
-                  <div className="border-l-2 border-primary/20 pl-4">
+                  <div className="border-l-2 border-primary/20 pl-4 mt-4">
                     <p className="text-sm text-muted-foreground">
                       "The portfolio helped me stand out from 200+ applicants."
                     </p>
