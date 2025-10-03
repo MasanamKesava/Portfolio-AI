@@ -27,6 +27,14 @@ type Status = {
   isOpen: boolean;
 };
 
+/** ---- EDIT THESE IF YOUR NAMES DIFFER ---- */
+const REG_TABLE = "free_portfolio_registrations";    // your registrations table name
+const STATUS_TABLE = "free_portfolio_status";        // optional status table if you keep limit/isOpen there
+const RPC_GET_STATUS = "get_free_portfolio_status";  // existing
+const RPC_REGISTER = "register_free_portfolio";      // existing
+const RPC_RESET = "reset_free_portfolio";            // optional recommended RPC
+/** ---------------------------------------- */
+
 const DEADLINE_ISO =
   import.meta.env.VITE_COUNTDOWN_DEADLINE || "2025-10-10T00:00:00+05:30";
 const DEADLINE_MS = new Date(DEADLINE_ISO).getTime();
@@ -53,7 +61,7 @@ const Register = () => {
   const registrationClosed = !isOpen || registeredCount >= limit;
   const spotsLeft = Math.max(0, limit - registeredCount);
 
-  // Live ticking countdown
+  // Live ticking countdown (re-renders every second)
   const [tick, setTick] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 1000);
@@ -73,23 +81,49 @@ const Register = () => {
     []
   );
 
-  // Load global status on mount
+  // Load + refresh helpers
+  const refetchStatus = async () => {
+    const { data, error } = await supabase.rpc(RPC_GET_STATUS);
+    if (error) {
+      console.error("Status error:", error);
+      // fail-open defaults
+      setRegisteredCount(0);
+      setLimit(10);
+      setIsOpen(true);
+      return;
+    }
+    const s = data as Status;
+    setRegisteredCount(s?.registeredCount ?? 0);
+    setLimit(s?.limit ?? 10);
+    setIsOpen(!!s?.isOpen);
+  };
+
+  // Initial load
   useEffect(() => {
-    (async () => {
-      const { data, error } = await supabase.rpc("get_free_portfolio_status");
-      if (error) {
-        console.error("Status error:", error);
-        // fail-open but show 0/10 to avoid blocking UI
-        setRegisteredCount(0);
-        setLimit(10);
-        setIsOpen(true);
-        return;
-      }
-      const s = data as Status;
-      setRegisteredCount(s.registeredCount ?? 0);
-      setLimit(s.limit ?? 10);
-      setIsOpen(!!s.isOpen);
-    })();
+    refetchStatus();
+  }, []);
+
+  // Realtime: reflect INSERT/DELETE/UPDATE on registrations & status tables
+  useEffect(() => {
+    const channel = supabase
+      .channel("free-portfolio-realtime")
+      // any change on registrations table should update count
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: REG_TABLE },
+        () => refetchStatus()
+      )
+      // if you also edit open/limit in a status table, listen to that too
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: STATUS_TABLE },
+        () => refetchStatus()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Form
@@ -120,7 +154,7 @@ const Register = () => {
     setIsSubmitting(true);
     try {
       // 1) Call Supabase RPC to atomically register + increment counter
-      const { data, error } = await supabase.rpc("register_free_portfolio", {
+      const { data, error } = await supabase.rpc(RPC_REGISTER, {
         p_name: formData.name,
         p_email: formData.email,
         p_phone: formData.phone,
@@ -143,7 +177,7 @@ const Register = () => {
         return;
       }
 
-      // 2) Update UI with new global count
+      // 2) Update UI with new global count (also realtime will kick in)
       setRegisteredCount(newCount);
 
       // 3) Optional: forward to Formsubmit (client-side email)
@@ -195,6 +229,47 @@ const Register = () => {
       setIsSubmitting(false);
     }
   };
+
+  // ---- Optional Admin Reset (hidden unless you set localStorage flag) ----
+  const isAdmin =
+    typeof window !== "undefined" &&
+    window.localStorage?.getItem("freePortfolio.isAdmin") === "1";
+
+  const handleAdminReset = async () => {
+    try {
+      // Prefer RPC that resets counters + re-opens registrations
+      const { error: rpcErr } = await supabase.rpc(RPC_RESET);
+      if (rpcErr) {
+        console.warn("RPC reset failed, trying table delete fallback:", rpcErr.message);
+
+        // Fallback: delete all registrations (requires permissive RLS for your logged-in role)
+        const { error: delErr } = await supabase
+          .from(REG_TABLE)
+          .delete()
+          .neq("id", 0); // delete all rows
+        if (delErr) throw delErr;
+
+        // If you store limit/isOpen in a status table, you might also update it via another RPC here.
+      }
+
+      await refetchStatus();
+      toast({
+        title: "Reset complete",
+        description: "All registrations cleared and counts refreshed.",
+      });
+    } catch (err: unknown) {
+      console.error("Admin reset error:", err);
+      toast({
+        title: "Reset failed",
+        description:
+          err && typeof err === "object" && "message" in err
+            ? (err as { message?: string }).message
+            : "Check RLS or create RPC `reset_free_portfolio`.",
+        variant: "destructive",
+      });
+    }
+  };
+  // ----------------------------------------------------------------------
 
   return (
     <div className="min-h-screen">
@@ -259,6 +334,19 @@ const Register = () => {
                 Only {spotsLeft} spots left!
               </div>
             </div>
+
+            {/* Admin-only reset control (hidden by default) */}
+            {isAdmin && (
+              <div className="flex justify-center">
+                <Button
+                  type="button"
+                  onClick={handleAdminReset}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Admin: Reset Registrations
+                </Button>
+              </div>
+            )}
           </div>
         </section>
 
