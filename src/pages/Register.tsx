@@ -16,7 +16,7 @@ const REGISTRATION_CLOSED_KEY = "freePortfolio.registrationClosed";
 
 // --- Option 1: Global countdown ---
 // Use current time + fixed duration for everyone
-const OFFER_DURATION_MS = 
+const OFFER_DURATION_MS =
   5 * 24 * 60 * 60 * 1000 + // 5 days
   12 * 60 * 60 * 1000 +     // 12 hours
   30 * 60 * 1000 +          // 30 minutes
@@ -42,7 +42,6 @@ const Register = () => {
   const [formData, setFormData] = useState({
     name: "", email: "", phone: "", college: "", course: "",
   });
-
   const [timeLeft, setTimeLeft] = useState(() => timeLeftFromMs(GLOBAL_DEADLINE_MS - Date.now()));
 
   // Hydrate count/closed from localStorage
@@ -50,17 +49,12 @@ const Register = () => {
     try {
       const savedCount = localStorage.getItem(REGISTERED_COUNT_KEY);
       const savedClosed = localStorage.getItem(REGISTRATION_CLOSED_KEY);
-
       if (savedCount !== null) {
         const n = parseInt(savedCount, 10);
         if (!Number.isNaN(n)) setRegisteredCount(n);
       }
-      if (savedClosed !== null) {
-        setRegistrationClosed(savedClosed === "true");
-      }
-    } catch {
-      // ignore errors
-    }
+      if (savedClosed !== null) setRegistrationClosed(savedClosed === "true");
+    } catch {}
   }, []);
 
   // Persist count/closed changes
@@ -96,7 +90,6 @@ const Register = () => {
       return;
     }
 
-    // Block registration if offer expired
     if (GLOBAL_DEADLINE_MS - Date.now() <= 0) {
       toast({
         title: "Offer Ended",
@@ -118,7 +111,7 @@ const Register = () => {
       submitData.append("_template", "table");
       submitData.append("_captcha", "false");
 
-      // --- Autoresponse message ---
+      // Autoresponse message
       submitData.append("_autoresponse", `
 Subject: Thank You for Your Interest, ${formData.name}! Your Request is Confirmed!
 
@@ -168,7 +161,7 @@ Best regards,
     <div className="min-h-screen">
       <Navbar />
       <div className="pt-20 pb-16">
-        {/* Header and Countdown */}
+        {/* Header */}
         <section className="py-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
             <div className="flex justify-center mb-6">
@@ -212,9 +205,173 @@ Best regards,
           </div>
         </section>
 
-        {/* Form & Sidebar ... */}
-        {/* Keep all your existing form, sidebar, FAQ code here as in your original file */}
-        {/* Only changes are in handleSubmit and countdown above */}
+        {/* Form & Sidebar */}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Form */}
+            <div>
+              <Card className="glass-card border-0">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold flex items-center">
+                    <Sparkles className="mr-3 h-6 w-6 text-primary" />
+                    {registrationClosed ? "Registration Closed" : "Claim Your FREE Portfolio"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {registrationClosed ? (
+                    <div className="text-center py-8">
+                      <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                      <h3 className="text-xl font-bold mb-2">Registration Closed!</h3>
+                      <p className="text-muted-foreground mb-6">
+                        We've reached our limit of 10 FREE portfolio websites.
+                        Thank you for your interest!
+                      </p>
+                      <Link to="/contact">
+                        <Button className="bg-gradient-primary hover:opacity-90 text-white shadow-glow">
+                          Contact Us for Paid Options
+                        </Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      {[
+                        { label: "Full Name *", name: "name", icon: User, placeholder: "Enter your full name", type: "text" },
+                        { label: "Email Address *", name: "email", icon: Mail, placeholder: "your.email@example.com", type: "email" },
+                        { label: "Phone Number *", name: "phone", icon: Phone, placeholder: "+91 XXXXX XXXXX", type: "tel" },
+                        { label: "College/University *", name: "college", icon: GraduationCap, placeholder: "Your college/university name", type: "text" },
+                      ].map(({label,name,icon:Icon,placeholder,type}) => (
+                        <div key={name}>
+                          <Label htmlFor={name} className="block text-sm font-medium mb-2">{label}</Label>
+                          <div className="relative">
+                            <Icon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id={name} name={name} type={type} required
+                              value={formData[name as keyof typeof formData]}
+                              onChange={handleInputChange}
+                              className="glass-card pl-10" placeholder={placeholder}
+                            />
+                          </div>
+                        </div>
+                      ))}
+
+                      <div>
+                        <Label htmlFor="course" className="block text-sm font-medium mb-2">
+                          Course/Major *
+                        </Label>
+                        <Input
+                          id="course" name="course" type="text" required
+                          value={formData.course} onChange={handleInputChange}
+                          className="glass-card" placeholder="e.g., Computer Science, IT, etc."
+                        />
+                      </div>
+
+                      <Button
+                        type="submit" disabled={isSubmitting}
+                        className="w-full bg-gradient-primary hover:opacity-90 text-white shadow-glow text-lg py-3"
+                      >
+                        {isSubmitting ? "Registering..." : (
+                          <>
+                            Claim FREE Portfolio
+                            <ArrowRight className="ml-2 h-5 w-5" />
+                          </>
+                        )}
+                      </Button>
+
+                      <p className="text-xs text-muted-foreground text-center">
+                        By registering, you agree to receive updates about your FREE portfolio website.
+                      </p>
+                    </form>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              <Card className="glass-card border-0">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold">What You Get FREE</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[
+                    ["Professional Portfolio Website", "Custom-designed portfolio worth ₹999"],
+                    ["AI Resume Analysis", "Get intelligent feedback on your resume"],
+                    ["GitHub Integration", "Showcase your projects automatically"],
+                    ["3 Months Support", "Free updates and maintenance"],
+                  ].map(([title, desc]) => (
+                    <div key={title} className="flex items-start space-x-3">
+                      <CheckCircle className="h-5 w-5 text-success mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold">{title}</h4>
+                        <p className="text-sm text-muted-foreground">{desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card border-0 bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/20">
+                <CardContent className="p-6 text-center">
+                  <Timer className="h-8 w-8 text-red-500 mx-auto mb-3" />
+                  <h3 className="text-lg font-bold mb-2 text-red-500">⚡ Limited Time Only!</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    This offer is only available for the first 10 users. After that,
+                    portfolio websites will cost ₹999.
+                  </p>
+                  <div className="text-2xl font-bold text-red-500">
+                    {spotsLeft} spots remaining
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card border-0">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold">Success Stories</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="border-l-2 border-primary/20 pl-4">
+                    <p className="text-sm text-muted-foreground">
+                      "Got my dream job at Microsoft thanks to my portfolio!"
+                    </p>
+                    <p className="text-xs font-semibold mt-1">- Priya, Software Engineer</p>
+                  </div>
+                  <div className="border-l-2 border-primary/20 pl-4">
+                    <p className="text-sm text-muted-foreground">
+                      "The portfolio helped me stand out from 200+ applicants."
+                    </p>
+                    <p className="text-xs font-semibold mt-1">- Rahul, Full Stack Developer</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+
+        {/* FAQ */}
+        <section className="py-16 px-4 sm:px-6 lg:px-8 mt-16">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {[
+                ["Is this really FREE?",
+                 "Yes! The first 10 users get a completely FREE portfolio website worth ₹999. No hidden charges, no credit card required."],
+                ["How long will it take?",
+                 "Your portfolio will be ready within 2-3 business days after registration. We'll send you updates via email."],
+                ["What if I'm not satisfied?",
+                 "We offer unlimited revisions until you're 100% satisfied with your portfolio. Your success is our priority."],
+                ["Can I customize later?",
+                 "Absolutely! You get 3 months of free support and can request changes anytime during this period."],
+              ].map(([q, a]) => (
+                <Card key={q} className="glass-card border-0">
+                  <CardContent className="p-6">
+                    <h4 className="font-semibold mb-3 text-primary">{q}</h4>
+                    <p className="text-muted-foreground text-sm">{a}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
