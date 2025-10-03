@@ -4,7 +4,7 @@ import {
   User, Mail, Phone, GraduationCap, CheckCircle, Timer, Gift, Users, Sparkles, ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -12,12 +12,13 @@ import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 
 const REGISTERED_COUNT_KEY = "freePortfolio.registeredCount";
-const DEADLINE_KEY = "freePortfolio.deadlineMs";
 
-// Initial visible duration for first-time visitors
-const INITIAL_TIME = { days: 5, hours: 12, minutes: 30, seconds: 45 };
+// 👉 Universal deadline (same for everyone), read from env or fallback:
+const DEADLINE_ISO =
+  import.meta.env.VITE_COUNTDOWN_DEADLINE || "2025-10-09T18:30:00Z";
+const DEADLINE_MS = new Date(DEADLINE_ISO).getTime();
 
-function timeLeftFromMs(ms: number) {
+function toTimeParts(ms: number) {
   if (ms <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   const totalSeconds = Math.floor(ms / 1000);
   const days = Math.floor(totalSeconds / 86400);
@@ -27,96 +28,46 @@ function timeLeftFromMs(ms: number) {
   return { days, hours, minutes, seconds };
 }
 
-function initialDurationMs() {
-  const { days, hours, minutes, seconds } = INITIAL_TIME;
-  return (
-    days * 24 * 60 * 60 * 1000 +
-    hours * 60 * 60 * 1000 +
-    minutes * 60 * 1000 +
-    seconds * 1000
-  );
-}
-
 const Register = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Count drives "closed" state
-  const [registeredCount, setRegisteredCount] = useState(1); // default fallback
-  const registrationClosed = registeredCount >= 10; // close only when 10 reached
+  // Count drives closure (local persistence; adjust if you later want server-global cap)
+  const [registeredCount, setRegisteredCount] = useState(1);
+  const registrationClosed = registeredCount >= 10;
 
-  // --- deadline (persisted) ---
-  const [deadlineMs, setDeadlineMs] = useState<number | null>(null);
-
-  // Tick to drive the visible countdown each second
+  // Live tick for countdown
   const [tick, setTick] = useState(0);
 
-  // Derive time left from deadline (memoized; recomputes on every tick)
-  const timeLeft = useMemo(() => {
-    if (deadlineMs === null) return INITIAL_TIME;
-    const remaining = deadlineMs - Date.now();
-    return timeLeftFromMs(remaining);
-  }, [deadlineMs, tick]);
-
-  // 1) On mount, hydrate state from localStorage (count + one-time deadline)
+  // Hydrate count once
   useEffect(() => {
     try {
-      const savedCount = localStorage.getItem(REGISTERED_COUNT_KEY);
-      const savedDeadline = localStorage.getItem(DEADLINE_KEY);
-
-      if (savedCount !== null) {
-        const n = parseInt(savedCount, 10);
+      const saved = localStorage.getItem(REGISTERED_COUNT_KEY);
+      if (saved) {
+        const n = parseInt(saved, 10);
         if (!Number.isNaN(n)) setRegisteredCount(n);
       }
-
-      if (savedDeadline) {
-        const parsed = parseInt(savedDeadline, 10);
-        if (!Number.isNaN(parsed)) {
-          setDeadlineMs(parsed);
-        } else {
-          // Corrupt value → reset once
-          const d = Date.now() + initialDurationMs();
-          localStorage.setItem(DEADLINE_KEY, String(d));
-          setDeadlineMs(d);
-        }
-      } else {
-        // First visit → set new deadline once; persists so it won't reset on refresh
-        const d = Date.now() + initialDurationMs();
-        localStorage.setItem(DEADLINE_KEY, String(d));
-        setDeadlineMs(d);
-      }
-    } catch {
-      // ignore storage errors (private mode, etc.)
-      if (deadlineMs === null) {
-        setDeadlineMs(Date.now() + initialDurationMs());
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    } catch {}
   }, []);
 
-  // 2) Persist count when it changes
+  // Persist count
   useEffect(() => {
     try {
       localStorage.setItem(REGISTERED_COUNT_KEY, String(registeredCount));
-    } catch {
-      // ignore storage errors
-    }
+    } catch {}
   }, [registeredCount]);
 
-  // 3) Tick every second to refresh the countdown; stop at zero
+  // Drive ticking every second
   useEffect(() => {
-    if (deadlineMs === null) return;
-    const id = setInterval(() => {
-      const remaining = deadlineMs - Date.now();
-      if (remaining <= 0) {
-        clearInterval(id);
-        setTick((x) => x + 1); // final recompute to show zeros
-      } else {
-        setTick((x) => x + 1);
-      }
-    }, 1000);
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(id);
-  }, [deadlineMs]);
+  }, []);
+
+  // Derive time left from the single global deadline
+  const timeLeft = useMemo(() => {
+    const remaining = Math.max(0, DEADLINE_MS - Date.now());
+    return toTimeParts(remaining);
+  }, [tick]);
 
   const [formData, setFormData] = useState({
     name: "", email: "", phone: "", college: "", course: "",
@@ -160,8 +111,7 @@ const Register = () => {
 
       if (!response.ok) throw new Error("Registration failed");
 
-      const newCount = registeredCount + 1;
-      setRegisteredCount(newCount);
+      setRegisteredCount((c) => c + 1);
 
       toast({
         title: "Message Sent!",
@@ -202,14 +152,16 @@ const Register = () => {
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              First 10 users get a completely FREE professional portfolio website worth ₹5000!
+              First 10 users get a completely FREE professional portfolio website worth ₹999!
             </p>
 
-            {/* Countdown (informational only) */}
+            {/* Global Countdown (same for everyone) */}
             <div className="glass-card p-6 rounded-2xl max-w-2xl mx-auto mb-8">
               <div className="flex items-center justify-center mb-4">
                 <Timer className="h-6 w-6 text-accent mr-2" />
-                <span className="text-lg font-semibold">Offer Ends In:</span>
+                <span className="text-lg font-semibold">
+                  Offer Ends ({new Date(DEADLINE_MS).toUTCString()}):
+                </span>
               </div>
               <div className="grid grid-cols-4 gap-4 text-center">
                 <div className="bg-gradient-primary p-3 rounded-lg text-white">
@@ -230,7 +182,7 @@ const Register = () => {
                 </div>
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                *Countdown is informational. Registrations close after 10 sign-ups.
+                *Countdown is universal. Registrations close after 10 sign-ups regardless of timer.
               </p>
             </div>
 
@@ -255,10 +207,10 @@ const Register = () => {
             <div>
               <Card className="glass-card border-0">
                 <CardHeader>
-                  <div className="text-2xl font-bold flex items-center">
+                  <CardTitle className="text-2xl font-bold flex items-center">
                     <Sparkles className="mr-3 h-6 w-6 text-primary" />
                     {registrationClosed ? "Registration Closed" : "Claim Your FREE Portfolio"}
-                  </div>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {registrationClosed ? (
@@ -369,11 +321,11 @@ const Register = () => {
             <div className="space-y-6">
               <Card className="glass-card border-0">
                 <CardHeader>
-                  <div className="text-xl font-bold">What You Get FREE</div>
+                  <CardTitle className="text-xl font-bold">What You Get FREE</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {[
-                    ["Professional Portfolio Website", "Custom-designed portfolio worth ₹5000"],
+                    ["Professional Portfolio Website", "Custom-designed portfolio worth ₹999"],
                     ["AI Resume Analysis", "Get intelligent feedback on your resume"],
                     ["GitHub Integration", "Showcase your projects automatically"],
                     ["3 Months Support", "Free updates and maintenance"],
@@ -395,7 +347,7 @@ const Register = () => {
                   <h3 className="text-lg font-bold mb-2 text-red-500">⚡ Limited Time Only!</h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     This offer is only available for the first 10 users. After that,
-                    portfolio websites will cost ₹5000.
+                    portfolio websites will cost ₹999.
                   </p>
                   <div className="text-2xl font-bold text-red-500">
                     {spotsLeft} spots remaining
@@ -405,7 +357,7 @@ const Register = () => {
 
               <Card className="glass-card border-0">
                 <CardHeader>
-                  <div className="text-xl font-bold">Success Stories</div>
+                  <CardTitle className="text-xl font-bold">Success Stories</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="border-l-2 border-primary/20 pl-4">
@@ -433,7 +385,7 @@ const Register = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {[
                 ["Is this really FREE?",
-                 "Yes! The first 10 users get a completely FREE portfolio website worth ₹5000. No hidden charges, no credit card required."],
+                 "Yes! The first 10 users get a completely FREE portfolio website worth ₹999. No hidden charges, no credit card required."],
                 ["How long will it take?",
                  "Your portfolio will be ready within 2-3 business days after registration. We'll send you updates via email."],
                 ["What if I'm not satisfied?",
