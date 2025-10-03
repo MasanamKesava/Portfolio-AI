@@ -593,5 +593,3 @@ const Register = () => {
 };
 
 export default Register;
-
-didit get the mail when from is submitted restructurte the code
