@@ -300,7 +300,7 @@ const Register = () => {
                 </span>
               </div>
               <div className="text-accent font-bold text-lg inline-flex items-baseline gap-1">
-                Only <Digit value={spotsLeft} maxDigits={digits} /> spots left!
+                Only<Digit value={spotsLeft} maxDigits={digits} /> spots left!
               </div>
               {isAdmin && (
                 <div className="ml-4">
