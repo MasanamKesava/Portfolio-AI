@@ -19,19 +19,18 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
+import { supabase } from "@/lib/supabaseClient";
 
-const REGISTERED_COUNT_KEY = "freePortfolio.registeredCount";
+type Status = {
+  registeredCount: number;
+  limit: number;
+  isOpen: boolean;
+};
 
-/**
- * GLOBAL IST DEADLINE
- * - Read once from env (recommended to set with +05:30 offset)
- * - Example: VITE_COUNTDOWN_DEADLINE=2025-10-10T00:00:00+05:30
- */
 const DEADLINE_ISO =
   import.meta.env.VITE_COUNTDOWN_DEADLINE || "2025-10-10T00:00:00+05:30";
 const DEADLINE_MS = new Date(DEADLINE_ISO).getTime();
 
-/** Convert remaining ms to d/h/m/s parts */
 function toTimeParts(ms: number) {
   if (ms <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   const totalSeconds = Math.floor(ms / 1000);
@@ -46,48 +45,24 @@ const Register = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Registration count (locally persisted). If you want global cap, back this with a backend.
-  const [registeredCount, setRegisteredCount] = useState(1);
-  const registrationClosed = registeredCount >= 10;
+  // Global status from Supabase
+  const [registeredCount, setRegisteredCount] = useState<number>(0);
+  const [limit, setLimit] = useState<number>(10);
+  const [isOpen, setIsOpen] = useState<boolean>(true);
 
-  // Countdown ticking driver
+  const registrationClosed = !isOpen || registeredCount >= limit;
+  const spotsLeft = Math.max(0, limit - registeredCount);
+
+  // Live ticking countdown
   const [tick, setTick] = useState(0);
-
-  // Hydrate local count
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(REGISTERED_COUNT_KEY);
-      if (saved) {
-        const n = parseInt(saved, 10);
-        if (!Number.isNaN(n)) setRegisteredCount(n);
-      }
-    } catch {
-      // ignore storage errors
-    }
-  }, []);
-
-  // Persist local count
-  useEffect(() => {
-    try {
-      localStorage.setItem(REGISTERED_COUNT_KEY, String(registeredCount));
-    } catch {
-      // ignore storage errors
-    }
-  }, [registeredCount]);
-
-  // Tick every second
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(id);
   }, []);
-
-  // Derive remaining time from single global deadline
-  const timeLeft = useMemo(() => {
+  const timeLeft = (() => {
     const remaining = Math.max(0, DEADLINE_MS - Date.now());
     return toTimeParts(remaining);
-  }, [tick]);
-
-  // Pretty label in IST
+  })();
   const deadlineStrIST = useMemo(
     () =>
       new Date(DEADLINE_MS).toLocaleString("en-IN", {
@@ -98,6 +73,26 @@ const Register = () => {
     []
   );
 
+  // Load global status on mount
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase.rpc("get_free_portfolio_status");
+      if (error) {
+        console.error("Status error:", error);
+        // fail-open but show 0/10 to avoid blocking UI
+        setRegisteredCount(0);
+        setLimit(10);
+        setIsOpen(true);
+        return;
+      }
+      const s = data as Status;
+      setRegisteredCount(s.registeredCount ?? 0);
+      setLimit(s.limit ?? 10);
+      setIsOpen(!!s.isOpen);
+    })();
+  }, []);
+
+  // Form
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -113,47 +108,70 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Close ONLY when 10 registrations are done
     if (registrationClosed) {
       toast({
         title: "Registration Closed",
-        description: "Sorry, we've reached our limit of 10 users.",
+        description: "Sorry, we’ve reached the limit.",
         variant: "destructive",
       });
       return;
     }
 
-    // Countdown is informational; do NOT block on deadline.
     setIsSubmitting(true);
     try {
-      const submitData = new FormData();
-      submitData.append("name", formData.name);
-      submitData.append("email", formData.email);
-      submitData.append("phone", formData.phone);
-      submitData.append("college", formData.college);
-      submitData.append("course", formData.course);
-      submitData.append(
-        "_subject",
-        "🎉 New Registration - FREE Portfolio Website Offer!"
-      );
-      submitData.append("_template", "table");
-      submitData.append("_captcha", "false");
+      // 1) Call Supabase RPC to atomically register + increment counter
+      const { data, error } = await supabase.rpc("register_free_portfolio", {
+        p_name: formData.name,
+        p_email: formData.email,
+        p_phone: formData.phone,
+        p_college: formData.college,
+        p_course: formData.course,
+      });
 
-      const response = await fetch(
-        "https://formsubmit.co/masanamkesava@gmail.com",
-        {
+      if (error) throw error;
+
+      const ok = data?.ok === true;
+      const newCount = Number(data?.registeredCount ?? registeredCount);
+      if (!ok) {
+        // Closed or failed
+        setRegisteredCount(newCount || registeredCount);
+        toast({
+          title: "Registration Closed",
+          description: data?.message || "No spots remaining.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 2) Update UI with new global count
+      setRegisteredCount(newCount);
+
+      // 3) Optional: forward to Formsubmit (client-side email)
+      try {
+        const submitData = new FormData();
+        submitData.append("name", formData.name);
+        submitData.append("email", formData.email);
+        submitData.append("phone", formData.phone);
+        submitData.append("college", formData.college);
+        submitData.append("course", formData.course);
+        submitData.append(
+          "_subject",
+          "🎉 New Registration - FREE Portfolio Website Offer!"
+        );
+        submitData.append("_template", "table");
+        submitData.append("_captcha", "false");
+
+        await fetch("https://formsubmit.co/masanamkesava@gmail.com", {
           method: "POST",
           body: submitData,
-        }
-      );
-
-      if (!response.ok) throw new Error("Registration failed");
-
-      setRegisteredCount((c) => c + 1);
+        });
+      } catch (fwdErr) {
+        console.warn("Formsubmit forward failed:", fwdErr);
+      }
 
       toast({
-        title: "Message Sent!",
-        description: "We'll get back to you within 24 hours.",
+        title: "Registered!",
+        description: "We’ll get back to you within 24 hours.",
       });
 
       setFormData({
@@ -163,19 +181,20 @@ const Register = () => {
         college: "",
         course: "",
       });
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Registration error:", err);
       toast({
         title: "Registration Failed",
-        description: "Please try again or contact us directly.",
+        description:
+          err && typeof err === "object" && "message" in err
+            ? (err as { message?: string }).message
+            : "Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const spotsLeft = Math.max(0, 10 - registeredCount);
 
   return (
     <div className="min-h-screen">
@@ -196,17 +215,14 @@ const Register = () => {
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              First 10 users get a completely FREE professional portfolio website
-              worth ₹999!
+              First 10 users get a completely FREE professional portfolio website worth ₹999!
             </p>
 
-            {/* Global Countdown (IST for everyone) */}
+            {/* Global Countdown (IST) */}
             <div className="glass-card p-6 rounded-2xl max-w-2xl mx-auto mb-8">
               <div className="flex items-center justify-center mb-4">
                 <Timer className="h-6 w-6 text-accent mr-2" />
-                <span className="text-lg font-semibold">
-                  Offer Ends ({deadlineStrIST})
-                </span>
+                <span className="text-lg font-semibold">Offer Ends ({deadlineStrIST})</span>
               </div>
               <div className="grid grid-cols-4 gap-4 text-center">
                 <div className="bg-gradient-primary p-3 rounded-lg text-white">
@@ -227,8 +243,7 @@ const Register = () => {
                 </div>
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                *Countdown is universal (IST). Registrations close after 10
-                sign-ups regardless of timer.
+                *Countdown is universal (IST). Registrations close after 10 sign-ups.
               </p>
             </div>
 
@@ -237,7 +252,7 @@ const Register = () => {
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
                 <span className="text-lg font-semibold">
-                  {registeredCount}/10 Registered
+                  {registeredCount}/{limit} Registered
                 </span>
               </div>
               <div className="text-accent font-bold text-lg">
@@ -255,21 +270,16 @@ const Register = () => {
                 <CardHeader>
                   <CardTitle className="text-2xl font-bold flex items-center">
                     <Sparkles className="mr-3 h-6 w-6 text-primary" />
-                    {registrationClosed
-                      ? "Registration Closed"
-                      : "Claim Your FREE Portfolio"}
+                    {registrationClosed ? "Registration Closed" : "Claim Your FREE Portfolio"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {registrationClosed ? (
                     <div className="text-center py-8">
                       <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                      <h3 className="text-xl font-bold mb-2">
-                        Registration Closed!
-                      </h3>
+                      <h3 className="text-xl font-bold mb-2">Registration Closed!</h3>
                       <p className="text-muted-foreground mb-6">
-                        We've reached our limit of 10 FREE portfolio websites.
-                        Thank you for your interest!
+                        We’ve reached our limit of {limit} FREE portfolio websites. Thank you for your interest!
                       </p>
                       <Link to="/contact">
                         <Button className="bg-gradient-primary hover:opacity-90 text-white shadow-glow">
@@ -280,10 +290,7 @@ const Register = () => {
                   ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
                       <div>
-                        <Label
-                          htmlFor="name"
-                          className="block text-sm font-medium mb-2"
-                        >
+                        <Label htmlFor="name" className="block text-sm font-medium mb-2">
                           Full Name *
                         </Label>
                         <div className="relative">
@@ -302,10 +309,7 @@ const Register = () => {
                       </div>
 
                       <div>
-                        <Label
-                          htmlFor="email"
-                          className="block text-sm font-medium mb-2"
-                        >
+                        <Label htmlFor="email" className="block text-sm font-medium mb-2">
                           Email Address *
                         </Label>
                         <div className="relative">
@@ -324,10 +328,7 @@ const Register = () => {
                       </div>
 
                       <div>
-                        <Label
-                          htmlFor="phone"
-                          className="block text-sm font-medium mb-2"
-                        >
+                        <Label htmlFor="phone" className="block text-sm font-medium mb-2">
                           Phone Number *
                         </Label>
                         <div className="relative">
@@ -346,10 +347,7 @@ const Register = () => {
                       </div>
 
                       <div>
-                        <Label
-                          htmlFor="college"
-                          className="block text-sm font-medium mb-2"
-                        >
+                        <Label htmlFor="college" className="block text-sm font-medium mb-2">
                           College/University *
                         </Label>
                         <div className="relative">
@@ -368,10 +366,7 @@ const Register = () => {
                       </div>
 
                       <div>
-                        <Label
-                          htmlFor="course"
-                          className="block text-sm font-medium mb-2"
-                        >
+                        <Label htmlFor="course" className="block text-sm font-medium mb-2">
                           Course/Major *
                         </Label>
                         <Input
@@ -402,8 +397,7 @@ const Register = () => {
                       </Button>
 
                       <p className="text-xs text-muted-foreground text-center">
-                        By registering, you agree to receive updates about your
-                        FREE portfolio website.
+                        By registering, you agree to receive updates about your FREE portfolio website.
                       </p>
                     </form>
                   )}
@@ -415,24 +409,13 @@ const Register = () => {
             <div className="space-y-6">
               <Card className="glass-card border-0">
                 <CardHeader>
-                  <CardTitle className="text-xl font-bold">
-                    What You Get FREE
-                  </CardTitle>
+                  <CardTitle className="text-xl font-bold">What You Get FREE</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {[
-                    [
-                      "Professional Portfolio Website",
-                      "Custom-designed portfolio worth ₹999",
-                    ],
-                    [
-                      "AI Resume Analysis",
-                      "Get intelligent feedback on your resume",
-                    ],
-                    [
-                      "GitHub Integration",
-                      "Showcase your projects automatically",
-                    ],
+                    ["Professional Portfolio Website", "Custom-designed portfolio worth ₹999"],
+                    ["AI Resume Analysis", "Get intelligent feedback on your resume"],
+                    ["GitHub Integration", "Showcase your projects automatically"],
                     ["3 Months Support", "Free updates and maintenance"],
                   ].map(([title, desc]) => (
                     <div key={title} className="flex items-start space-x-3">
@@ -449,12 +432,10 @@ const Register = () => {
               <Card className="glass-card border-0 bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/20">
                 <CardContent className="p-6 text-center">
                   <Timer className="h-8 w-8 text-red-500 mx-auto mb-3" />
-                  <h3 className="text-lg font-bold mb-2 text-red-500">
-                    ⚡ Limited Time Only!
-                  </h3>
+                  <h3 className="text-lg font-bold mb-2 text-red-500">⚡ Limited Time Only!</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    This offer is only available for the first 10 users. After
-                    that, portfolio websites will cost ₹999.
+                    This offer is only available for the first {limit} users. After that,
+                    portfolio websites will cost ₹999.
                   </p>
                   <div className="text-2xl font-bold text-red-500">
                     {spotsLeft} spots remaining
@@ -464,26 +445,20 @@ const Register = () => {
 
               <Card className="glass-card border-0">
                 <CardHeader>
-                  <CardTitle className="text-xl font-bold">
-                    Success Stories
-                  </CardTitle>
+                  <CardTitle className="text-xl font-bold">Success Stories</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="border-l-2 border-primary/20 pl-4">
                     <p className="text-sm text-muted-foreground">
                       "Got my dream job at Microsoft thanks to my portfolio!"
                     </p>
-                    <p className="text-xs font-semibold mt-1">
-                      - Priya, Software Engineer
-                    </p>
+                    <p className="text-xs font-semibold mt-1">- Priya, Software Engineer</p>
                   </div>
                   <div className="border-l-2 border-primary/20 pl-4">
                     <p className="text-sm text-muted-foreground">
                       "The portfolio helped me stand out from 200+ applicants."
                     </p>
-                    <p className="text-xs font-semibold mt-1">
-                      - Rahul, Full Stack Developer
-                    </p>
+                    <p className="text-xs font-semibold mt-1">- Rahul, Full Stack Developer</p>
                   </div>
                 </CardContent>
               </Card>
