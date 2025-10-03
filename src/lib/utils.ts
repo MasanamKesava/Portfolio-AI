@@ -1,6 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
+// src/lib/utils.ts
+import { type ClassValue } from "clsx";
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-export const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL!,
-  import.meta.env.VITE_SUPABASE_ANON_KEY!
-);
+/**
+ * Merge Tailwind classes conditionally, dedupe conflicts.
+ * Usage: className={cn("p-2", isActive && "bg-primary")}
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
