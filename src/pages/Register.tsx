@@ -1,7 +1,16 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
-  User, Mail, Phone, GraduationCap, CheckCircle, Timer, Gift, Users, Sparkles, ArrowRight,
+  User,
+  Mail,
+  Phone,
+  GraduationCap,
+  CheckCircle,
+  Timer,
+  Gift,
+  Users,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,32 +27,19 @@ type Status = {
   isOpen: boolean;
 };
 
+/** ---- EDIT THESE IF YOUR NAMES DIFFER ---- */
 const REG_TABLE = "free_portfolio_registrations";
-const STATUS_TABLE = "free_portfolio_status"; // ok if it doesn't exist; listener just won't fire
+const STATUS_TABLE = "free_portfolio_status"; // ok if you don't have it; listener will just no-op
 const RPC_GET_STATUS = "get_free_portfolio_status";
 const RPC_REGISTER = "register_free_portfolio";
-const RPC_RESET = "reset_free_portfolio"; // optional
+const RPC_RESET = "reset_free_portfolio"; // optional (admin only)
+/** ---------------------------------------- */
 
 const DEADLINE_ISO =
   import.meta.env.VITE_COUNTDOWN_DEADLINE || "2025-10-10T00:00:00+05:30";
 const DEADLINE_MS = new Date(DEADLINE_ISO).getTime();
 
-/** Single-digit display (no zero-padding) but width reserved to avoid flicker */
-function Digit({ value, maxDigits }: { value: number; maxDigits: number }) {
-  return (
-    <span
-      className="inline-block font-mono tabular-nums tracking-tight"
-      style={{
-        minWidth: `${maxDigits}ch`, // keeps layout stable
-        textAlign: "right",         // right-align without adding zeros
-      }}
-    >
-      {String(value)}
-    </span>
-  );
-}
-
-
+/** Utility: convert ms → parts */
 function toTimeParts(ms: number) {
   if (ms <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   const totalSeconds = Math.floor(ms / 1000);
@@ -52,6 +48,25 @@ function toTimeParts(ms: number) {
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
   return { days, hours, minutes, seconds };
+}
+
+/** Shared numeric style: tabular digits, monospace, right-aligned */
+const numStyle: React.CSSProperties = {
+  fontVariantNumeric: "tabular-nums",
+  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+  textAlign: "right",
+};
+
+/** Number span with reserved width (no zero-padding, no layout shift) */
+function Num({ value, maxDigits }: { value: number; maxDigits: number }) {
+  return (
+    <span
+      style={{ ...numStyle, minWidth: `${maxDigits}ch` }}
+      className="inline-block align-baseline"
+    >
+      {value}
+    </span>
+  );
 }
 
 const Register = () => {
@@ -63,13 +78,13 @@ const Register = () => {
   const [limit, setLimit] = useState<number>(10);
   const [isOpen, setIsOpen] = useState<boolean>(true);
 
-  // Proper loading gate to prevent any initial mismatch
+  // Proper loading gate to avoid initial flicker
   const [isStatusLoading, setIsStatusLoading] = useState<boolean>(true);
 
   // Compute closed only after status known
   const registrationClosed = !isStatusLoading && (!isOpen || registeredCount >= limit);
   const spotsLeft = Math.max(0, limit - registeredCount);
-  const digits = useMemo(() => String(limit).length, [limit]); // lock width for both numbers
+  const maxDigits = useMemo(() => String(limit).length, [limit]); // reserve width using limit's digit count
 
   // Live ticking countdown
   const [tick, setTick] = useState(0);
@@ -93,7 +108,7 @@ const Register = () => {
     []
   );
 
-  // Load + refresh helpers
+  // Fetch status
   const refetchStatus = async () => {
     try {
       const { data, error } = await supabase.rpc(RPC_GET_STATUS);
@@ -119,7 +134,7 @@ const Register = () => {
     refetchStatus();
   }, []);
 
-  // Realtime
+  // Realtime updates from Supabase
   useEffect(() => {
     const channel = supabase
       .channel("free-portfolio-realtime")
@@ -159,6 +174,7 @@ const Register = () => {
 
     setIsSubmitting(true);
     try {
+      // Atomic register + increment via RPC
       const { data, error } = await supabase.rpc(RPC_REGISTER, {
         p_name: formData.name,
         p_email: formData.email,
@@ -199,7 +215,7 @@ const Register = () => {
         console.warn("Formsubmit forward failed:", fwdErr);
       }
 
-      toast({ title: "Registered!🎉🎉", description: "We’ll get back to you within 24 hours." });
+      toast({ title: "Registered! 🎉", description: "We’ll get back to you within 24 hours." });
       setFormData({ name: "", email: "", phone: "", college: "", course: "" });
     } catch (err: unknown) {
       console.error("Registration error:", err);
@@ -216,6 +232,7 @@ const Register = () => {
     }
   };
 
+  // Optional: Admin reset (hidden unless you set localStorage flag)
   const isAdmin =
     typeof window !== "undefined" &&
     window.localStorage?.getItem("freePortfolio.isAdmin") === "1";
@@ -290,18 +307,23 @@ const Register = () => {
               </p>
             </div>
 
-            {/* Spots (numbers locked with fixed width & tabular digits) */}
-            <div className="flex items-center justify-center gap-4 mb-8">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                <span className="text-lg font-semibold inline-flex items-baseline gap-1">
-                  <Digit value={registeredCount} maxDigits={digits} />/
-                  <Digit value={limit} maxDigits={digits} /> Registered
-                </span>
+            {/* Spots — numbers with adaptive spacing and no layout shift */}
+            <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+              {/* 1 / 10 Registered */}
+              <div className="flex items-baseline text-lg font-semibold">
+                <Num value={registeredCount} maxDigits={maxDigits} />
+                <span className="mx-1">/</span>
+                <Num value={limit} maxDigits={maxDigits} />
+                <span className="ml-2">Registered</span>
               </div>
-              <div className="text-accent font-bold text-lg inline-flex items-baseline gap-1">
-                Only<Digit value={spotsLeft} maxDigits={digits} /> spots left!
+
+              {/* Only 9 spots left! */}
+              <div className="text-accent font-bold text-lg flex items-baseline">
+                <span>Only&nbsp;</span>
+                <Num value={spotsLeft} maxDigits={maxDigits} />
+                <span>&nbsp;spots left!</span>
               </div>
+
               {isAdmin && (
                 <div className="ml-4">
                   <Button
@@ -435,7 +457,7 @@ const Register = () => {
                           onChange={handleInputChange}
                           className="glass-card"
                           placeholder="e.g., Computer Science, IT, etc."
-                          />
+                        />
                       </div>
 
                       <Button
@@ -494,8 +516,8 @@ const Register = () => {
                     This offer is only available for the first {limit} users. After that,
                     portfolio websites will cost ₹5000.
                   </p>
-                  <div className="text-2xl font-bold text-red-500 inline-flex items-baseline gap-1">
-                    <Digit value={spotsLeft} maxDigits={digits} /> spots remaining
+                  <div className="text-2xl font-bold text-red-500 flex items-baseline justify-center gap-1">
+                    <Num value={spotsLeft} maxDigits={maxDigits} /> spots remaining
                   </div>
                 </CardContent>
               </Card>
@@ -531,14 +553,22 @@ const Register = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {[
-                ["Is this really FREE?",
-                 "Yes! The first 10 users get a completely FREE portfolio website worth ₹5000. No hidden charges, no credit card required."],
-                ["How long will it take?",
-                 "Your portfolio will be ready within 2-3 business days after registration. We'll send you updates via email."],
-                ["What if I'm not satisfied?",
-                 "We offer unlimited revisions until you're 100% satisfied with your portfolio. Your success is our priority."],
-                ["Can I customize later?",
-                 "Absolutely! You get 3 months of free support and can request changes anytime during this period."],
+                [
+                  "Is this really FREE?",
+                  "Yes! The first 10 users get a completely FREE portfolio website worth ₹5000. No hidden charges, no credit card required.",
+                ],
+                [
+                  "How long will it take?",
+                  "Your portfolio will be ready within 2-3 business days after registration. We'll send you updates via email.",
+                ],
+                [
+                  "What if I'm not satisfied?",
+                  "We offer unlimited revisions until you're 100% satisfied with your portfolio. Your success is our priority.",
+                ],
+                [
+                  "Can I customize later?",
+                  "Absolutely! You get 3 months of free support and can request changes anytime during this period.",
+                ],
               ].map(([q, a]) => (
                 <Card key={q} className="glass-card border-0">
                   <CardContent className="p-6">
