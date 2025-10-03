@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   User, Mail, Phone, GraduationCap, CheckCircle, Timer, Gift, Users, Sparkles, ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -13,25 +13,53 @@ import Navbar from "@/components/Navbar";
 
 const REGISTERED_COUNT_KEY = "freePortfolio.registeredCount";
 const REGISTRATION_CLOSED_KEY = "freePortfolio.registrationClosed";
+const DEADLINE_KEY = "freePortfolio.deadlineMs";
+
+// Initial visible duration for first-time visitors
+const INITIAL_TIME = { days: 5, hours: 12, minutes: 30, seconds: 45 };
+
+function timeLeftFromMs(ms: number) {
+  if (ms <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return { days, hours, minutes, seconds };
+}
+
+function initialDurationMs() {
+  const { days, hours, minutes, seconds } = INITIAL_TIME;
+  return (
+    days * 24 * 60 * 60 * 1000 +
+    hours * 60 * 60 * 1000 +
+    minutes * 60 * 1000 +
+    seconds * 1000
+  );
+}
 
 const Register = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationClosed, setRegistrationClosed] = useState(false);
   const [registeredCount, setRegisteredCount] = useState(1); // default fallback
-  const [formData, setFormData] = useState({
-    name: "", email: "", phone: "", college: "", course: "",
-  });
 
-  const [timeLeft, setTimeLeft] = useState({
-    days: 5, hours: 12, minutes: 30, seconds: 45,
-  });
+  // --- deadline (persisted) ---
+  const [deadlineMs, setDeadlineMs] = useState<number | null>(null);
+
+  // Derive time left from deadline (memoized)
+  const timeLeft = useMemo(() => {
+    if (deadlineMs === null) return INITIAL_TIME;
+    const remaining = deadlineMs - Date.now();
+    return timeLeftFromMs(remaining);
+  }, [deadlineMs]);
 
   // 1) On mount, hydrate state from localStorage
   useEffect(() => {
     try {
       const savedCount = localStorage.getItem(REGISTERED_COUNT_KEY);
       const savedClosed = localStorage.getItem(REGISTRATION_CLOSED_KEY);
+      const savedDeadline = localStorage.getItem(DEADLINE_KEY);
 
       if (savedCount !== null) {
         const n = parseInt(savedCount, 10);
@@ -40,12 +68,33 @@ const Register = () => {
       if (savedClosed !== null) {
         setRegistrationClosed(savedClosed === "true");
       }
+
+      if (savedDeadline) {
+        const parsed = parseInt(savedDeadline, 10);
+        if (!Number.isNaN(parsed)) {
+          setDeadlineMs(parsed);
+        } else {
+          // Corrupt value → reset
+          const d = Date.now() + initialDurationMs();
+          localStorage.setItem(DEADLINE_KEY, String(d));
+          setDeadlineMs(d);
+        }
+      } else {
+        // First visit → set new deadline
+        const d = Date.now() + initialDurationMs();
+        localStorage.setItem(DEADLINE_KEY, String(d));
+        setDeadlineMs(d);
+      }
     } catch {
       // ignore storage errors (private mode, etc.)
+      if (deadlineMs === null) {
+        setDeadlineMs(Date.now() + initialDurationMs());
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 2) Whenever these change, persist to localStorage
+  // 2) Persist count/closed to localStorage when they change
   useEffect(() => {
     try {
       localStorage.setItem(REGISTERED_COUNT_KEY, String(registeredCount));
@@ -55,23 +104,36 @@ const Register = () => {
     }
   }, [registeredCount, registrationClosed]);
 
-  // Countdown timer
+  // 3) Tick every second to refresh the derived time left
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
-        if (prev.minutes > 0) return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        if (prev.hours > 0) return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        if (prev.days > 0) return { ...prev, days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
-        return prev;
-      });
+    if (deadlineMs === null) return;
+    const id = setInterval(() => {
+      const remaining = deadlineMs - Date.now();
+      if (remaining <= 0) {
+        clearInterval(id);
+        // Optional: auto-close registration when the timer ends
+        // setRegistrationClosed(true);
+        // Ensure timeLeft shows zeros on next render (deadlineMs stays same; derived becomes zeros)
+      } else {
+        // trigger re-render by updating a no-op state? Not needed:
+        // we rely on deadlineMs in deps; to force tick, we can update a dummy state.
+        // Simpler: use a state to cause re-render each second:
+        setTick((x) => x + 1);
+      }
     }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    return () => clearInterval(id);
+  }, [deadlineMs]);
+
+  // Dummy tick to re-render every second
+  const [, setTick] = useState(0);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((s) => ({ ...s, [e.target.name]: e.target.value }));
   };
+
+  const [formData, setFormData] = useState({
+    name: "", email: "", phone: "", college: "", course: "",
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,33 +147,27 @@ const Register = () => {
       return;
     }
 
+    // If timer elapsed, optionally block new registrations
+    if (deadlineMs !== null && deadlineMs - Date.now() <= 0) {
+      toast({
+        title: "Offer Ended",
+        description: "The limited-time offer has expired.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const submitData = new FormData();
       submitData.append("name", formData.name);
-      submitData.append("email", formData.email); // required for autoresponse
+      submitData.append("email", formData.email);
       submitData.append("phone", formData.phone);
       submitData.append("college", formData.college);
       submitData.append("course", formData.course);
       submitData.append("_subject", "🎉 New Registration - FREE Portfolio Website Offer!");
       submitData.append("_template", "table");
       submitData.append("_captcha", "false");
-
-      // 🔔 Auto-response to the user's email (FormSubmit reads _autoresponse as the email body)
-      const userDisplayName = formData.name?.trim() || "there";
-      const autoResponseMsg =
-`Subject: Thank You for Your Interest, ${userDisplayName}! Your Request is Confirmed! 
-
-Body:
-
-Thank you for your request! We have received your information and will contact you shortly.
-
-Your Free Website Portfolio and ATS-Friendly Resume are now in process, and you can expect to receive them soon.
-
-If you are happy with our service, we would be grateful if you could share this opportunity with your friends.
-
-Best regards,`;
-      submitData.append("_autoresponse", autoResponseMsg);
 
       const response = await fetch("https://formsubmit.co/masanamkesava@gmail.com", {
         method: "POST",
@@ -125,9 +181,8 @@ Best regards,`;
       if (newCount >= 10) setRegistrationClosed(true);
 
       toast({
-        title: "Registration Successful! 🎉",
-        description:
-          "Welcome aboard! You'll receive your FREE portfolio website details via email within 24 hours.",
+        title: "Message Sent!",
+        description: "We'll get back to you within 24 hours.",
       });
 
       setFormData({ name: "", email: "", phone: "", college: "", course: "" });
@@ -164,7 +219,7 @@ Best regards,`;
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              First 10 users get a completely FREE professional portfolio website worth ₹5000!
+              First 10 users get a completely FREE professional portfolio website worth ₹999!
             </p>
 
             {/* Countdown */}
@@ -213,16 +268,17 @@ Best regards,`;
             {/* Form */}
             <div>
               <Card className="glass-card border-0">
-                <CardContent className="p-6">
-                  <h3 className="text-2xl font-bold flex items-center mb-6">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold flex items-center">
                     <Sparkles className="mr-3 h-6 w-6 text-primary" />
                     {registrationClosed ? "Registration Closed" : "Claim Your FREE Portfolio"}
-                  </h3>
-
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
                   {registrationClosed ? (
                     <div className="text-center py-8">
                       <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                      <h4 className="text-xl font-bold mb-2">Registration Closed!</h4>
+                      <h3 className="text-xl font-bold mb-2">Registration Closed!</h3>
                       <p className="text-muted-foreground mb-6">
                         We've reached our limit of 10 FREE portfolio websites.
                         Thank you for your interest!
@@ -251,7 +307,7 @@ Best regards,`;
 
                       <div>
                         <Label htmlFor="email" className="block text-sm font-medium mb-2">
-                          Email Address * (for confirmation)
+                          Email Address *
                         </Label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -326,8 +382,10 @@ Best regards,`;
             {/* Sidebar */}
             <div className="space-y-6">
               <Card className="glass-card border-0">
-                <CardContent className="p-6">
-                  <h4 className="text-xl font-bold mb-4">What You Get FREE</h4>
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold">What You Get FREE</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   {[
                     ["Professional Portfolio Website", "Custom-designed portfolio worth ₹999"],
                     ["AI Resume Analysis", "Get intelligent feedback on your resume"],
@@ -337,7 +395,7 @@ Best regards,`;
                     <div key={title} className="flex items-start space-x-3">
                       <CheckCircle className="h-5 w-5 text-success mt-0.5" />
                       <div>
-                        <h5 className="font-semibold">{title}</h5>
+                        <h4 className="font-semibold">{title}</h4>
                         <p className="text-sm text-muted-foreground">{desc}</p>
                       </div>
                     </div>
@@ -360,15 +418,17 @@ Best regards,`;
               </Card>
 
               <Card className="glass-card border-0">
-                <CardContent className="p-6">
-                  <h4 className="text-xl font-bold mb-4">Success Stories</h4>
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold">Success Stories</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <div className="border-l-2 border-primary/20 pl-4">
                     <p className="text-sm text-muted-foreground">
                       "Got my dream job at Microsoft thanks to my portfolio!"
                     </p>
                     <p className="text-xs font-semibold mt-1">- Priya, Software Engineer</p>
                   </div>
-                  <div className="border-l-2 border-primary/20 pl-4 mt-4">
+                  <div className="border-l-2 border-primary/20 pl-4">
                     <p className="text-sm text-muted-foreground">
                       "The portfolio helped me stand out from 200+ applicants."
                     </p>
@@ -387,7 +447,7 @@ Best regards,`;
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {[
                 ["Is this really FREE?",
-                 "Yes! The first 10 users get a completely FREE portfolio website worth ₹1999. No hidden charges, no credit card required."],
+                 "Yes! The first 10 users get a completely FREE portfolio website worth ₹999. No hidden charges, no credit card required."],
                 ["How long will it take?",
                  "Your portfolio will be ready within 2-3 business days after registration. We'll send you updates via email."],
                 ["What if I'm not satisfied?",
