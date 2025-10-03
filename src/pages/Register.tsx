@@ -56,6 +56,9 @@ const Register = () => {
   const [limit, setLimit] = useState<number>(10);
   const [isOpen, setIsOpen] = useState<boolean>(true);
 
+  // ✅ ADDED: Loading state to remove blinking glitch
+  const [isStatusLoading, setIsStatusLoading] = useState(true);
+  
   const registrationClosed = !isOpen || registeredCount >= limit;
   const spotsLeft = Math.max(0, limit - registeredCount);
 
