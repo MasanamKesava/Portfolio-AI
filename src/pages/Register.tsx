@@ -35,8 +35,9 @@ const RPC_REGISTER = "register_free_portfolio";
 const RPC_RESET = "reset_free_portfolio"; // optional (admin only)
 /** ---------------------------------------- */
 
+/** Countdown deadline (defaults to Oct 17, 2025 23:59:59 IST if env not set) */
 const DEADLINE_ISO =
-  import.meta.env.VITE_COUNTDOWN_DEADLINE || "2025-10-10T00:00:00+05:30";
+  import.meta.env.VITE_COUNTDOWN_DEADLINE || "2025-10-17T23:59:59+05:30";
 const DEADLINE_MS = new Date(DEADLINE_ISO).getTime();
 
 /** Utility: convert ms → parts */
@@ -338,7 +339,7 @@ const Register = () => {
               </p>
             </div>
 
-            {/* Spots (REPLACED BLOCK) */}
+            {/* Spots */}
             <div className="flex items-center justify-center gap-4 mb-8">
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
