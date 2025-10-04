@@ -35,9 +35,9 @@ const RPC_REGISTER = "register_free_portfolio";
 const RPC_RESET = "reset_free_portfolio"; // optional (admin only)
 /** ---------------------------------------- */
 
-/** Countdown deadline (defaults to Oct 17, 2025 23:59:59 IST if env not set) */
+/** New deadline: Friday 17 October, 2025 (IST) */
 const DEADLINE_ISO =
-  import.meta.env.VITE_COUNTDOWN_DEADLINE || "2025-10-17T23:59:59+05:30";
+  import.meta.env.VITE_COUNTDOWN_DEADLINE || "2025-10-17T00:00:00+05:30";
 const DEADLINE_MS = new Date(DEADLINE_ISO).getTime();
 
 /** Utility: convert ms → parts */
@@ -49,6 +49,20 @@ function toTimeParts(ms: number) {
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
   return { days, hours, minutes, seconds };
+}
+
+/** Format "Friday 17 October, 2025" in IST without time */
+function formatDeadlineDate(ms: number) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Kolkata",
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).formatToParts(new Date(ms));
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("weekday")} ${get("day")} ${get("month")}, ${get("year")}`;
 }
 
 /** Shared numeric style: tabular digits, monospace, right-aligned */
@@ -100,15 +114,7 @@ const Register = () => {
     return toTimeParts(remaining);
   }, [tick]);
 
-  const deadlineStrIST = useMemo(
-    () =>
-      new Date(DEADLINE_MS).toLocaleString("en-IN", {
-        timeZone: "Asia/Kolkata",
-        dateStyle: "full",
-        timeStyle: "long",
-      }),
-    []
-  );
+  const deadlineStrIST = useMemo(() => formatDeadlineDate(DEADLINE_MS), []);
 
   // Fetch status
   const refetchStatus = async () => {
