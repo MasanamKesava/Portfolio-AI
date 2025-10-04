@@ -878,7 +878,7 @@ const Index = () => {
                   Privacy Policy
                 </Link>
                 <Link
-                  to="https://app.termsfeed.com/download/b7d4049b-4aac-48ee-8b84-12a1b71f3a8c"
+                  to="https://www.termsfeed.com/live/0418e4b7-8655-40c9-b017-d176eea49a49"
                   className="text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                 >
                   Terms of Service
