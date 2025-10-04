@@ -878,7 +878,7 @@ const Index = () => {
                   Privacy Policy
                 </Link>
                 <Link
-                  to="https://www.termsfeed.com/live/0418e4b7-8655-40c9-b017-d176eea49a49"
+                  to="https://www.termsfeed.com/live/49188121-f740-4aa8-8d64-6b9c19f8937b"
                   className="text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                 >
                   Terms of Service
