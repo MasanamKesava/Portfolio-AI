@@ -658,8 +658,8 @@ const Index = () => {
           </div>
         </div>
       </section>
-      /* Footer */
-      <footer className="border-t border-zinc-200 dark:border-white/10 py-12 bg-white dark:bg-transparent">
+      { /* Footer */ }
+      <footer className="border-t border-border bg-background py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             {/* Brand + blurb */}
@@ -668,13 +668,13 @@ const Index = () => {
                 <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xl font-bold text-zinc-900 dark:text-white">
+                <span className="text-xl font-bold text-foreground">
                   PortfolioAI
                 </span>
               </div>
-              <p className="text-zinc-600 dark:text-gray-400 text-sm max-w-xs">
-                Transform your career with our AI - powered portfolio and resume
-                builder.Join thousands of students who have successfully landed
+              <p className="text-sm text-muted-foreground max-w-xs">
+                Transform your career with our AI-powered portfolio and resume
+                builder. Join thousands of students who have successfully landed
                 their dream jobs.
               </p>
               <div className="flex gap-4">
@@ -705,15 +705,14 @@ const Index = () => {
 
             {/* Quick Links */}
             <div>
-              <h3 className="text-zinc-900 dark:text-white font-semibold mb-4">
-                {" "}
-                Quick Links{" "}
+              <h3 className="text-foreground font-semibold mb-4">
+                Quick Links
               </h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <Link
                     to="/resume-builder"
-                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+                    className="text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                   >
                     Resume Builder
                   </Link>
@@ -721,7 +720,7 @@ const Index = () => {
                 <li>
                   <Link
                     to="#"
-                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+                    className="text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                   >
                     AI Tools
                   </Link>
@@ -729,7 +728,7 @@ const Index = () => {
                 <li>
                   <Link
                     to="/products"
-                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+                    className="text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                   >
                     Portfolio
                   </Link>
@@ -737,7 +736,7 @@ const Index = () => {
                 <li>
                   <Link
                     to="#pricing"
-                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+                    className="text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                   >
                     Pricing
                   </Link>
@@ -745,7 +744,7 @@ const Index = () => {
                 <li>
                   <Link
                     to="/contact"
-                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+                    className="text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                   >
                     Contact
                   </Link>
@@ -755,15 +754,12 @@ const Index = () => {
 
             {/* Resources */}
             <div>
-              <h3 className="text-zinc-900 dark:text-white font-semibold mb-4">
-                {" "}
-                Resources{" "}
-              </h3>
+              <h3 className="text-foreground font-semibold mb-4">Resources</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <a
                     href="/products"
-                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors flex items-center gap-1"
+                    className="text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 transition-colors flex items-center gap-1"
                   >
                     Sample Portfolios <ExternalLink className="w-3 h-3" />
                   </a>
@@ -771,7 +767,7 @@ const Index = () => {
                 <li>
                   <a
                     href="/resume-builder"
-                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors flex items-center gap-1"
+                    className="text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 transition-colors flex items-center gap-1"
                   >
                     Resume Templates <ExternalLink className="w-3 h-3" />
                   </a>
@@ -781,7 +777,7 @@ const Index = () => {
                     href="https://github.com/MasanamKesava"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors flex items-center gap-1"
+                    className="text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 transition-colors flex items-center gap-1"
                   >
                     GitHub Repos <ExternalLink className="w-3 h-3" />
                   </a>
@@ -791,16 +787,12 @@ const Index = () => {
 
             {/* Contact / hours */}
             <div>
-              <h3 className="text-zinc-900 dark:text-white font-semibold mb-4">
-                {" "}
-                Get In Touch{" "}
+              <h3 className="text-foreground font-semibold mb-4">
+                Get In Touch
               </h3>
               <div className="space-y-3 text-sm">
-                <div className="text-zinc-600 dark:text-gray-400">
-                  <strong className="text-zinc-900 dark:text-white">
-                    {" "}
-                    Business Hours:{" "}
-                  </strong>
+                <div className="text-muted-foreground">
+                  <strong className="text-foreground">Business Hours:</strong>
                   <br />
                   Mon - Fri: 9:00 AM - 6:00 PM
                   <br />
@@ -811,27 +803,27 @@ const Index = () => {
           </div>
 
           {/* Offer strip */}
-          <div className="bg-gradient-to-r from-green-500/10 to-purple-500/10 border border-green-600/20 dark:border-green-500/20 rounded-lg p-4 mb-8">
+          <div className="rounded-lg p-4 mb-8 border border-border bg-gradient-to-r from-green-500/10 to-purple-500/10">
             <div className="flex items-center justify-center gap-2 text-center">
-              <Zap className="w-5 h-5 text-green-600 dark:text-green-400" />
-              <span className="text-green-700 dark:text-green-400 font-medium">
+              <Zap className="w-5 h-5 text-green-700 dark:text-green-400" />
+              <span className="font-medium text-green-700 dark:text-green-400">
                 Special Launch Offer
               </span>
             </div>
-            <p className="text-zinc-700 dark:text-gray-300 text-sm mt-1 text-center">
+            <p className="text-sm mt-1 text-center text-muted-foreground">
               First 10 users get FREE Portfolio Website worth ₹5000. Only 5 days
               left!
             </p>
           </div>
 
           {/* CTA strip */}
-          <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-600/20 dark:border-purple-500/20 rounded-lg p-6 mb-8">
+          <div className="rounded-lg p-6 mb-8 border border-border bg-gradient-to-r from-purple-500/10 to-pink-500/10">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
-                <h3 className="text-zinc-900 dark:text-white font-semibold text-lg mb-1">
-                  Ready to Transform Your Career ?
+                <h3 className="text-lg font-semibold text-foreground mb-1">
+                  Ready to Transform Your Career?
                 </h3>
-                <p className="text-zinc-700 dark:text-gray-400 text-sm">
+                <p className="text-sm text-muted-foreground">
                   Contact Kesava Masanam for personalized portfolio and resume
                   solutions
                 </p>
@@ -868,10 +860,10 @@ const Index = () => {
           </div>
 
           {/* Bottom row */}
-          <div className="border-t border-zinc-200 dark:border-white/10 pt-6">
+          <div className="border-t border-border pt-6">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="flex items-center gap-4 text-sm text-zinc-600 dark:text-gray-400">
-                <span>© 2025 PortfolioAI.All rights reserved.</span>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span>© 2025 PortfolioAI. All rights reserved.</span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
                   Made with <Heart className="w-4 h-4 text-red-500" /> by Kesava
@@ -881,37 +873,37 @@ const Index = () => {
               <div className="flex gap-6 text-sm">
                 <Link
                   to="#"
-                  className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+                  className="text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                 >
                   Privacy Policy
                 </Link>
                 <Link
                   to="#"
-                  className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+                  className="text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                 >
                   Terms of Service
                 </Link>
                 <Link
                   to="#"
-                  className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+                  className="text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                 >
                   Support
                 </Link>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-6 mt-6 pt-6 border-t border-zinc-200 dark:border-white/10 text-xs">
-              <div className="flex items-center gap-1 text-zinc-700 dark:text-gray-400">
-                <Shield className="w-4 h-4 text-green-600 dark:text-green-400" />
-                <span>Trusted by students from top colleges </span>
+            <div className="flex flex-wrap items-center justify-center gap-6 mt-6 pt-6 border-t border-border text-xs">
+              <div className="flex items-center gap-1 text-foreground/80">
+                <Shield className="w-4 h-4 text-green-700 dark:text-green-400" />
+                <span>Trusted by students from top colleges</span>
               </div>
-              <div className="flex items-center gap-1 text-zinc-700 dark:text-gray-400">
-                <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                <span>98 % job success rate </span>
+              <div className="flex items-center gap-1 text-foreground/80">
+                <CheckCircle className="w-4 h-4 text-green-700 dark:text-green-400" />
+                <span>98% job success rate</span>
               </div>
-              <div className="flex items-center gap-1 text-zinc-700 dark:text-gray-400">
+              <div className="flex items-center gap-1 text-foreground/80">
                 <Award className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
-                <span>3 US clients successfully deployed </span>
+                <span>3 US clients successfully deployed</span>
               </div>
             </div>
           </div>
