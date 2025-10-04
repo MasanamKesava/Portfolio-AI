@@ -123,7 +123,6 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <Navbar />
-
       {/* animations */}
       <style>{`
         @keyframes wiggle {
@@ -149,7 +148,6 @@ const Index = () => {
             0 18px 40px rgba(124, 58, 237, 0.28);
         }
       `}</style>
-
       {/* Hero Section */}
       <section className="pt-20 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -159,24 +157,24 @@ const Index = () => {
               <div className="flex gap-3 mb-6">
                 <Badge className="bg-primary/20 text-primary border-primary/30 px-4 py-2 text-sm">
                   <Zap className="h-4 w-4 mr-2" />
-                  AI-Powered Platform
+                  AI - Powered Platform
                 </Badge>
                 <Badge className="bg-success/20 text-success border-success/30 px-4 py-2 text-sm">
-                  <CheckCircle className="h-4 w-4 mr-2" />3 US Clients Deployed
+                  <CheckCircle className="h-4 w-4 mr-2" /> 3 US Clients Deployed
                 </Badge>
               </div>
 
               <h1 className="text-[44px] md:text-[56px] font-extrabold leading-tight">
-                <span className="text-primary">AI-Powered</span>
+                <span className="text-primary"> AI - Powered </span>
                 <br />
-                <span className="text-foreground">Portfolio & Resume</span>
+                <span className="text-foreground"> Portfolio & Resume </span>
                 <br />
-                <span className="text-primary">Builder</span>
+                <span className="text-primary"> Builder </span>
               </h1>
 
               <p className="text-[18px] md:text-[20px] text-muted-foreground max-w-xl leading-relaxed">
-                Transform your career with our intelligent platform. Build
-                ATS-friendly resumes, stunning portfolios, and get AI-powered
+                Transform your career with our intelligent platform.Build ATS -
+                friendly resumes, stunning portfolios, and get AI - powered
                 insights to land your dream job.
               </p>
 
@@ -198,7 +196,7 @@ const Index = () => {
                 <div className="flex items-center gap-2">
                   <Target className="h-5 w-5 text-success" />
                   <span className="text-[15px] text-muted-foreground">
-                    100% Success Rate
+                    100 % Success Rate
                   </span>
                 </div>
               </div>
@@ -213,14 +211,15 @@ const Index = () => {
                     ₹5000
                   </div>
                   <Badge className="bg-accent text-white px-3 py-1 text-sm">
-                    60% OFF
+                    60 % OFF
                   </Badge>
                 </div>
                 <p className="text-success font-semibold text-[17px]">
                   First 10 users get FREE Portfolio Website!
                 </p>
                 <div className="text-accent text-[16px]">
-                  Offer ends in: <span className="font-bold">{timeLeft.days} Days</span>
+                  Offer ends in:{" "}
+                  <span className="font-bold"> {timeLeft.days} Days </span>
                 </div>
               </div>
 
@@ -237,16 +236,16 @@ const Index = () => {
                 </h3>
                 <div className="space-y-2 text-center text-[15px]">
                   <div className="flex justify-between">
-                    <span>Mon - Fri:</span>
-                    <span className="text-primary">9:00 AM - 6:00 PM</span>
+                    <span>Mon - Fri: </span>
+                    <span className="text-primary"> 9:00 AM - 6:00 PM </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Saturday:</span>
-                    <span className="text-primary">10:00 AM - 4:00 PM</span>
+                    <span>Saturday: </span>
+                    <span className="text-primary"> 10:00 AM - 4:00 PM </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Sunday:</span>
-                    <span className="text-muted-foreground">Closed</span>
+                    <span>Sunday: </span>
+                    <span className="text-muted-foreground"> Closed </span>
                   </div>
                 </div>
               </div>
@@ -298,7 +297,7 @@ const Index = () => {
                   <div className="absolute left-[-78px] top-8">
                     <div className="animate-wiggle-slow rounded-2xl bg-gradient-to-b from-indigo-900/40 to-indigo-900/10 border border-indigo-500/20 px-6 py-5 text-center shadow-lg">
                       <div className="text-[24px] font-bold text-indigo-300">
-                        500+
+                        500 +
                       </div>
                       <div className="text-[12px] text-indigo-200/80">
                         Portfolio Templates
@@ -323,7 +322,7 @@ const Index = () => {
                   <div className="absolute right-[-78px] bottom-6">
                     <div className="animate-wiggle-slowest rounded-2xl bg-gradient-to-b from-indigo-900/40 to-indigo-900/10 border border-indigo-500/20 px-7 py-6 text-center shadow-lg">
                       <div className="text-[24px] font-bold text-indigo-300">
-                        98%
+                        98 %
                       </div>
                       <div className="text-[12px] text-indigo-200/80">
                         Job Success Rate
@@ -337,35 +336,34 @@ const Index = () => {
           </div>
         </div>
       </section>
-
       {/* Pricing */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-8">Special Launch Pricing</h2>
+          <h2 className="text-4xl font-bold mb-8"> Special Launch Pricing </h2>
           <div className="glass-card p-9 rounded-3xl max-w-md mx-auto hover-lift">
             <div className="mb-6">
-              <div className="text-6xl font-bold text-accent mb-2">₹1999</div>
+              <div className="text-6xl font-bold text-accent mb-2">₹1999 </div>
               <div className="text-lg text-muted-foreground line-through">
                 ₹5000
               </div>
-              <Badge className="bg-accent text-white">60% OFF</Badge>
+              <Badge className="bg-accent text-white"> 60 % OFF </Badge>
             </div>
             <div className="space-y-4 mb-8 text-[16px]">
               <div className="flex items-center justify-center">
                 <CheckCircle className="h-5 w-5 text-success mr-3" />
-                <span>AI Resume Analysis</span>
+                <span>AI Resume Analysis </span>
               </div>
               <div className="flex items-center justify-center">
                 <CheckCircle className="h-5 w-5 text-success mr-3" />
-                <span>Unlimited Templates</span>
+                <span>Unlimited Templates </span>
               </div>
               <div className="flex items-center justify-center">
                 <CheckCircle className="h-5 w-5 text-success mr-3" />
-                <span>GitHub Integration</span>
+                <span>GitHub Integration </span>
               </div>
               <div className="flex items-center justify-center">
                 <CheckCircle className="h-5 w-5 text-success mr-3" />
-                <span>Portfolio Website</span>
+                <span>Portfolio Website </span>
               </div>
             </div>
             <Link to="/contact">
@@ -379,12 +377,11 @@ const Index = () => {
           </p>
         </div>
       </section>
-
       {/* Features */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Powerful Features</h2>
+            <h2 className="text-4xl font-bold mb-4"> Powerful Features </h2>
             <p className="text-xl text-muted-foreground">
               Everything you need to stand out in placements
             </p>
@@ -413,7 +410,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
       {/* Stats */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -431,7 +427,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
       {/* About */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -442,22 +437,22 @@ const Index = () => {
               </h2>
               <p className="text-lg text-muted-foreground mb-6">
                 Hi! I'm the founder of PortfolioBuilder. Having successfully
-                deployed 3 client portfolios in the U.S. and helped hundreds of
+                deployed 3 client portfolios in the U.S.and helped hundreds of
                 students land their dream jobs, I understand what recruiters are
                 looking for.
               </p>
               <div className="space-y-4 text-[16px]">
                 <div className="flex items-center">
                   <CheckCircle className="h-5 w-5 text-success mr-3" />
-                  <span>3 U.S. Client Portfolios Successfully Deployed</span>
+                  <span>3 U.S.Client Portfolios Successfully Deployed </span>
                 </div>
                 <div className="flex items-center">
                   <CheckCircle className="h-5 w-5 text-success mr-3" />
-                  <span>500+ Reference Portfolios Available</span>
+                  <span>500 + Reference Portfolios Available </span>
                 </div>
                 <div className="flex items-center">
                   <CheckCircle className="h-5 w-5 text-success mr-3" />
-                  <span>95% Placement Success Rate</span>
+                  <span>95 % Placement Success Rate </span>
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 mt-8">
@@ -493,7 +488,7 @@ const Index = () => {
                   alt="Founder"
                   className="w-72 h-72 object-cover rounded-2xl mx-auto mb-4 shadow-glow"
                 />
-                <h3 className="text-[24px] font-bold mb-2">Kesava Masanam</h3>
+                <h3 className="text-[24px] font-bold mb-2"> Kesava Masanam </h3>
                 <p className="text-[15px] text-muted-foreground mb-4">
                   Founder & Portfolio Expert
                 </p>
@@ -528,12 +523,11 @@ const Index = () => {
           </div>
         </div>
       </section>
-
       {/* Portfolio Samples */}
       <section className="py-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Portfolio Samples</h2>
+            <h2 className="text-4xl font-bold mb-4"> Portfolio Samples </h2>
             <p className="text-xl text-muted-foreground">
               See how our students showcase their skills
             </p>
@@ -575,7 +569,10 @@ const Index = () => {
                   />
                 </div>
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-2">{sample.title}</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    {" "}
+                    {sample.title}{" "}
+                  </h3>
                   <p className="text-muted-foreground text-sm mb-4">
                     {sample.description}
                   </p>
@@ -594,12 +591,11 @@ const Index = () => {
           </div>
         </div>
       </section>
-
       {/* Testimonials */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Success Stories</h2>
+            <h2 className="text-4xl font-bold mb-4"> Success Stories </h2>
             <p className="text-xl text-muted-foreground">
               See what our users are saying
             </p>
@@ -616,9 +612,9 @@ const Index = () => {
                       />
                     ))}
                   </div>
-                  <p className="text-muted-foreground mb-4">"{t.content}"</p>
+                  <p className="text-muted-foreground mb-4"> "{t.content}" </p>
                   <div>
-                    <div className="font-semibold">{t.name}</div>
+                    <div className="font-semibold"> {t.name} </div>
                     <div className="text-sm text-muted-foreground">
                       {t.role}
                     </div>
@@ -629,13 +625,12 @@ const Index = () => {
           </div>
         </div>
       </section>
-
       {/* CTA */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <div className="glass-card p-12 rounded-3xl">
             <h2 className="text-4xl font-bold mb-6">
-              Ready to Build Your Future?
+              Ready to Build Your Future ?
             </h2>
             <p className="text-xl text-muted-foreground mb-8">
               Join thousands of students who have already transformed their
@@ -645,7 +640,7 @@ const Index = () => {
               {/* ✅ Start Your Journey navigates to /contact */}
               <Button
                 className="bg-gradient-primary hover:opacity-90 text-white shadow-glow text-lg px-8 py-4"
-                  onClick={() => navigate("/register")}
+                onClick={() => navigate("/register")}
               >
                 Register FREE Now
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -663,30 +658,30 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t border-white/10 py-12">
+      /* Footer */
+      <footer className="border-t border-zinc-200 dark:border-white/10 py-12 bg-white dark:bg-transparent">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+            {/* Brand + blurb */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xl font-bold text-white">
+                <span className="text-xl font-bold text-zinc-900 dark:text-white">
                   PortfolioAI
                 </span>
               </div>
-              <p className="text-gray-400 text-sm max-w-xs">
-                Transform your career with our AI-powered portfolio and resume
-                builder. Join thousands of students who have successfully landed
+              <p className="text-zinc-600 dark:text-gray-400 text-sm max-w-xs">
+                Transform your career with our AI - powered portfolio and resume
+                builder.Join thousands of students who have successfully landed
                 their dream jobs.
               </p>
               <div className="flex gap-4">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-purple-500/30 text-purple-300 hover:bg-purple-500/20"
+                  className="border-purple-500/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 dark:hover:bg-purple-500/20"
                 >
                   <Phone className="w-4 h-4 mr-2" />
                   +91 9059086142
@@ -694,7 +689,7 @@ const Index = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-purple-500/30 text-purple-300 hover:bg-purple-500/20"
+                  className="border-purple-500/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 dark:hover:bg-purple-500/20"
                 >
                   <MessageSquare className="w-4 h-4 mr-2" />
                   <a
@@ -708,13 +703,17 @@ const Index = () => {
               </div>
             </div>
 
+            {/* Quick Links */}
             <div>
-              <h3 className="text-white font-semibold mb-4">Quick Links</h3>
+              <h3 className="text-zinc-900 dark:text-white font-semibold mb-4">
+                {" "}
+                Quick Links{" "}
+              </h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <Link
                     to="/resume-builder"
-                    className="text-gray-400 hover:text-purple-300 transition-colors"
+                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                   >
                     Resume Builder
                   </Link>
@@ -722,7 +721,7 @@ const Index = () => {
                 <li>
                   <Link
                     to="#"
-                    className="text-gray-400 hover:text-purple-300 transition-colors"
+                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                   >
                     AI Tools
                   </Link>
@@ -730,7 +729,7 @@ const Index = () => {
                 <li>
                   <Link
                     to="/products"
-                    className="text-gray-400 hover:text-purple-300 transition-colors"
+                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                   >
                     Portfolio
                   </Link>
@@ -738,7 +737,7 @@ const Index = () => {
                 <li>
                   <Link
                     to="#pricing"
-                    className="text-gray-400 hover:text-purple-300 transition-colors"
+                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                   >
                     Pricing
                   </Link>
@@ -746,7 +745,7 @@ const Index = () => {
                 <li>
                   <Link
                     to="/contact"
-                    className="text-gray-400 hover:text-purple-300 transition-colors"
+                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                   >
                     Contact
                   </Link>
@@ -754,13 +753,17 @@ const Index = () => {
               </ul>
             </div>
 
+            {/* Resources */}
             <div>
-              <h3 className="text-white font-semibold mb-4">Resources</h3>
+              <h3 className="text-zinc-900 dark:text-white font-semibold mb-4">
+                {" "}
+                Resources{" "}
+              </h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <a
                     href="/products"
-                    className="text-gray-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors flex items-center gap-1"
                   >
                     Sample Portfolios <ExternalLink className="w-3 h-3" />
                   </a>
@@ -768,7 +771,7 @@ const Index = () => {
                 <li>
                   <a
                     href="/resume-builder"
-                    className="text-gray-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors flex items-center gap-1"
                   >
                     Resume Templates <ExternalLink className="w-3 h-3" />
                   </a>
@@ -778,7 +781,7 @@ const Index = () => {
                     href="https://github.com/MasanamKesava"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+                    className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors flex items-center gap-1"
                   >
                     GitHub Repos <ExternalLink className="w-3 h-3" />
                   </a>
@@ -786,11 +789,18 @@ const Index = () => {
               </ul>
             </div>
 
+            {/* Contact / hours */}
             <div>
-              <h3 className="text-white font-semibold mb-4">Get In Touch</h3>
+              <h3 className="text-zinc-900 dark:text-white font-semibold mb-4">
+                {" "}
+                Get In Touch{" "}
+              </h3>
               <div className="space-y-3 text-sm">
-                <div className="text-gray-400">
-                  <strong className="text-white">Business Hours:</strong>
+                <div className="text-zinc-600 dark:text-gray-400">
+                  <strong className="text-zinc-900 dark:text-white">
+                    {" "}
+                    Business Hours:{" "}
+                  </strong>
                   <br />
                   Mon - Fri: 9:00 AM - 6:00 PM
                   <br />
@@ -800,26 +810,28 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-green-500/10 to-purple-500/10 border border-green-500/20 rounded-lg p-4 mb-8">
+          {/* Offer strip */}
+          <div className="bg-gradient-to-r from-green-500/10 to-purple-500/10 border border-green-600/20 dark:border-green-500/20 rounded-lg p-4 mb-8">
             <div className="flex items-center justify-center gap-2 text-center">
-              <Zap className="w-5 h-5 text-green-400" />
-              <span className="text-green-400 font-medium">
+              <Zap className="w-5 h-5 text-green-600 dark:text-green-400" />
+              <span className="text-green-700 dark:text-green-400 font-medium">
                 Special Launch Offer
               </span>
             </div>
-            <p className="text-gray-300 text-sm mt-1 text-center">
+            <p className="text-zinc-700 dark:text-gray-300 text-sm mt-1 text-center">
               First 10 users get FREE Portfolio Website worth ₹5000. Only 5 days
               left!
             </p>
           </div>
 
-          <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg p-6 mb-8">
+          {/* CTA strip */}
+          <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-600/20 dark:border-purple-500/20 rounded-lg p-6 mb-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
-                <h3 className="text-white font-semibold text-lg mb-1">
-                  Ready to Transform Your Career?
+                <h3 className="text-zinc-900 dark:text-white font-semibold text-lg mb-1">
+                  Ready to Transform Your Career ?
                 </h3>
-                <p className="text-gray-400 text-sm">
+                <p className="text-zinc-700 dark:text-gray-400 text-sm">
                   Contact Kesava Masanam for personalized portfolio and resume
                   solutions
                 </p>
@@ -829,7 +841,7 @@ const Index = () => {
                   variant="outline"
                   size="sm"
                   asChild
-                  className="border-purple-500/30 text-purple-300 hover:bg-purple-500/20"
+                  className="border-purple-500/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 dark:hover:bg-purple-500/20"
                 >
                   <a href={MAILTO_HREF}>
                     <Mail className="w-4 h-4 mr-2" />
@@ -840,7 +852,7 @@ const Index = () => {
                   variant="outline"
                   size="sm"
                   asChild
-                  className="border-purple-500/30 text-purple-300 hover:bg-purple-500/20"
+                  className="border-purple-500/30 text-purple-700 dark:text-purple-300 hover:bg-purple-500/10 dark:hover:bg-purple-500/20"
                 >
                   <a
                     href={GITHUB_URL}
@@ -855,10 +867,11 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="border-t border-white/10 pt-6">
+          {/* Bottom row */}
+          <div className="border-t border-zinc-200 dark:border-white/10 pt-6">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="flex items-center gap-4 text-sm text-gray-400">
-                <span>© 2025 PortfolioAI. All rights reserved.</span>
+              <div className="flex items-center gap-4 text-sm text-zinc-600 dark:text-gray-400">
+                <span>© 2025 PortfolioAI.All rights reserved.</span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
                   Made with <Heart className="w-4 h-4 text-red-500" /> by Kesava
@@ -868,37 +881,37 @@ const Index = () => {
               <div className="flex gap-6 text-sm">
                 <Link
                   to="#"
-                  className="text-gray-400 hover:text-purple-300 transition-colors"
+                  className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                 >
                   Privacy Policy
                 </Link>
                 <Link
                   to="#"
-                  className="text-gray-400 hover:text-purple-300 transition-colors"
+                  className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                 >
                   Terms of Service
                 </Link>
                 <Link
                   to="#"
-                  className="text-gray-400 hover:text-purple-300 transition-colors"
+                  className="text-zinc-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                 >
                   Support
                 </Link>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-6 mt-6 pt-6 border-t border-white/10 text-xs text-gray-400">
-              <div className="flex items-center gap-1">
-                <Shield className="w-4 h-4 text-green-400" />
-                <span>Trusted by students from top colleges</span>
+            <div className="flex flex-wrap items-center justify-center gap-6 mt-6 pt-6 border-t border-zinc-200 dark:border-white/10 text-xs">
+              <div className="flex items-center gap-1 text-zinc-700 dark:text-gray-400">
+                <Shield className="w-4 h-4 text-green-600 dark:text-green-400" />
+                <span>Trusted by students from top colleges </span>
               </div>
-              <div className="flex items-center gap-1">
-                <CheckCircle className="w-4 h-4 text-green-400" />
-                <span>98% job success rate</span>
+              <div className="flex items-center gap-1 text-zinc-700 dark:text-gray-400">
+                <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                <span>98 % job success rate </span>
               </div>
-              <div className="flex items-center gap-1">
-                <Award className="w-4 h-4 text-yellow-400" />
-                <span>3 US clients successfully deployed</span>
+              <div className="flex items-center gap-1 text-zinc-700 dark:text-gray-400">
+                <Award className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                <span>3 US clients successfully deployed </span>
               </div>
             </div>
           </div>
