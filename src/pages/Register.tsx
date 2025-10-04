@@ -82,7 +82,8 @@ const Register = () => {
   const [isStatusLoading, setIsStatusLoading] = useState<boolean>(true);
 
   // Compute closed only after status known
-  const registrationClosed = !isStatusLoading && (!isOpen || registeredCount >= limit);
+  const registrationClosed =
+    !isStatusLoading && (!isOpen || registeredCount >= limit);
   const spotsLeft = Math.max(0, limit - registeredCount);
   const maxDigits = useMemo(() => String(limit).length, [limit]); // reserve width using limit's digit count
 
@@ -138,8 +139,16 @@ const Register = () => {
   useEffect(() => {
     const channel = supabase
       .channel("free-portfolio-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: REG_TABLE }, () => refetchStatus())
-      .on("postgres_changes", { event: "*", schema: "public", table: STATUS_TABLE }, () => refetchStatus())
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: REG_TABLE },
+        () => refetchStatus()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: STATUS_TABLE },
+        () => refetchStatus()
+      )
       .subscribe();
 
     return () => {
@@ -207,16 +216,31 @@ const Register = () => {
         submitData.append("phone", formData.phone);
         submitData.append("college", formData.college);
         submitData.append("course", formData.course);
-        submitData.append("_subject", "🎉 New Registration - FREE Portfolio Website Offer!");
+        submitData.append(
+          "_subject",
+          "🎉 New Registration - FREE Portfolio Website Offer!"
+        );
         submitData.append("_template", "table");
         submitData.append("_captcha", "false");
-        await fetch("https://formsubmit.co/masanamkesava@gmail.com", { method: "POST", body: submitData });
+        await fetch("https://formsubmit.co/masanamkesava@gmail.com", {
+          method: "POST",
+          body: submitData,
+        });
       } catch (fwdErr) {
         console.warn("Formsubmit forward failed:", fwdErr);
       }
 
-      toast({ title: "Registered! 🎉", description: "We’ll get back to you within 24 hours." });
-      setFormData({ name: "", email: "", phone: "", college: "", course: "" });
+      toast({
+        title: "Registered! 🎉",
+        description: "We’ll get back to you within 24 hours.",
+      });
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        college: "",
+        course: "",
+      });
     } catch (err: unknown) {
       console.error("Registration error:", err);
       toast({
@@ -242,7 +266,10 @@ const Register = () => {
       const { error: rpcErr } = await supabase.rpc(RPC_RESET);
       if (rpcErr) throw rpcErr;
       await refetchStatus();
-      toast({ title: "Reset complete", description: "All registrations cleared and counts refreshed." });
+      toast({
+        title: "Reset complete",
+        description: "All registrations cleared and counts refreshed.",
+      });
     } catch (err: unknown) {
       console.error("Admin reset error:", err);
       toast({
@@ -275,14 +302,17 @@ const Register = () => {
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              First 10 users get a completely FREE professional portfolio website worth ₹5000!
+              First 10 users get a completely FREE professional portfolio website
+              worth ₹5000!
             </p>
 
             {/* Global Countdown (IST) */}
             <div className="glass-card p-6 rounded-2xl max-w-2xl mx-auto mb-8">
               <div className="flex items-center justify-center mb-4">
                 <Timer className="h-6 w-6 text-accent mr-2" />
-                <span className="text-lg font-semibold">Offer Ends ({deadlineStrIST})</span>
+                <span className="text-lg font-semibold">
+                  Offer Ends ({deadlineStrIST})
+                </span>
               </div>
               <div className="grid grid-cols-4 gap-4 text-center">
                 <div className="bg-gradient-primary p-3 rounded-lg text-white">
@@ -303,25 +333,24 @@ const Register = () => {
                 </div>
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                *Countdown is universal (IST). Registrations close after 10 sign-ups.
+                *Countdown is universal (IST). Registrations close after 10
+                sign-ups.
               </p>
             </div>
 
-            {/* Spots */}
-<div className="flex items-center justify-center gap-4 mb-8">
-  <div className="flex items-center gap-2">
-    <Users className="h-5 w-5 text-primary" />
-    <span className="text-lg font-semibold">
-      {registeredCount}/{limit} Registered
-    </span>
-  </div>
-  <div className="text-accent font-bold text-lg">
-    Only {spotsLeft} spots left!
-  </div>
-</div>
-
+            {/* Spots (REPLACED BLOCK) */}
+            <div className="flex items-center justify-center gap-4 mb-8">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                <span className="text-lg font-semibold">
+                  {registeredCount}/{limit} Registered
+                </span>
+              </div>
+              <div className="text-accent font-bold text-lg">
+                Only {spotsLeft} spots left!
+              </div>
               {isAdmin && (
-                <div className="ml-4">
+                <div className="ml-2">
                   <Button
                     type="button"
                     onClick={handleAdminReset}
@@ -352,9 +381,12 @@ const Register = () => {
                   {!isStatusLoading && registrationClosed ? (
                     <div className="text-center py-8">
                       <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                      <h3 className="text-xl font-bold mb-2">Registration Closed!</h3>
+                      <h3 className="text-xl font-bold mb-2">
+                        Registration Closed!
+                      </h3>
                       <p className="text-muted-foreground mb-6">
-                        We’ve reached our limit of {limit} FREE portfolio websites. Thank you for your interest!
+                        We’ve reached our limit of {limit} FREE portfolio
+                        websites. Thank you for your interest!
                       </p>
                       <Link to="/contact">
                         <Button className="bg-gradient-primary hover:opacity-90 text-white shadow-glow">
@@ -365,7 +397,10 @@ const Register = () => {
                   ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
                       <div>
-                        <Label htmlFor="name" className="block text-sm font-medium mb-2">
+                        <Label
+                          htmlFor="name"
+                          className="block text-sm font-medium mb-2"
+                        >
                           Full Name *
                         </Label>
                         <div className="relative">
@@ -384,7 +419,10 @@ const Register = () => {
                       </div>
 
                       <div>
-                        <Label htmlFor="email" className="block text-sm font-medium mb-2">
+                        <Label
+                          htmlFor="email"
+                          className="block text-sm font-medium mb-2"
+                        >
                           Email Address *
                         </Label>
                         <div className="relative">
@@ -403,7 +441,10 @@ const Register = () => {
                       </div>
 
                       <div>
-                        <Label htmlFor="phone" className="block text-sm font-medium mb-2">
+                        <Label
+                          htmlFor="phone"
+                          className="block text-sm font-medium mb-2"
+                        >
                           Phone Number *
                         </Label>
                         <div className="relative">
@@ -422,7 +463,10 @@ const Register = () => {
                       </div>
 
                       <div>
-                        <Label htmlFor="college" className="block text-sm font-medium mb-2">
+                        <Label
+                          htmlFor="college"
+                          className="block text-sm font-medium mb-2"
+                        >
                           College/University *
                         </Label>
                         <div className="relative">
@@ -441,7 +485,10 @@ const Register = () => {
                       </div>
 
                       <div>
-                        <Label htmlFor="course" className="block text-sm font-medium mb-2">
+                        <Label
+                          htmlFor="course"
+                          className="block text-sm font-medium mb-2"
+                        >
                           Course/Major *
                         </Label>
                         <Input
@@ -472,7 +519,8 @@ const Register = () => {
                       </Button>
 
                       <p className="text-xs text-muted-foreground text-center">
-                        By registering, you agree to receive updates about your FREE portfolio website.
+                        By registering, you agree to receive updates about your
+                        FREE portfolio website.
                       </p>
                     </form>
                   )}
@@ -484,12 +532,20 @@ const Register = () => {
             <div className="space-y-6">
               <Card className="glass-card border-0">
                 <CardHeader>
-                  <CardTitle className="text-xl font-bold">What You Get FREE</CardTitle>
+                  <CardTitle className="text-xl font-bold">
+                    What You Get FREE
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {[
-                    ["Professional Portfolio Website", "Custom-designed portfolio worth ₹5000"],
-                    ["AI Resume Analysis", "Get intelligent feedback on your resume"],
+                    [
+                      "Professional Portfolio Website",
+                      "Custom-designed portfolio worth ₹5000",
+                    ],
+                    [
+                      "AI Resume Analysis",
+                      "Get intelligent feedback on your resume",
+                    ],
                     ["GitHub Integration", "Showcase your projects automatically"],
                     ["3 Months Support", "Free updates and maintenance"],
                   ].map(([title, desc]) => (
@@ -507,33 +563,42 @@ const Register = () => {
               <Card className="glass-card border-0 bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/20">
                 <CardContent className="p-6 text-center">
                   <Timer className="h-8 w-8 text-red-500 mx-auto mb-3" />
-                  <h3 className="text-lg font-bold mb-2 text-red-500">⚡ Limited Time Only!</h3>
+                  <h3 className="text-lg font-bold mb-2 text-red-500">
+                    ⚡ Limited Time Only!
+                  </h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    This offer is only available for the first {limit} users. After that,
-                    portfolio websites will cost ₹5000.
+                    This offer is only available for the first {limit} users.
+                    After that, portfolio websites will cost ₹5000.
                   </p>
                   <div className="text-2xl font-bold text-red-500 flex items-baseline justify-center gap-1">
-                    <Num value={spotsLeft} maxDigits={maxDigits} /> spots remaining
+                    <Num value={spotsLeft} maxDigits={maxDigits} /> spots
+                    remaining
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="glass-card border-0">
                 <CardHeader>
-                  <CardTitle className="text-xl font-bold">Success Stories</CardTitle>
+                  <CardTitle className="text-xl font-bold">
+                    Success Stories
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="border-l-2 border-primary/20 pl-4">
                     <p className="text-sm text-muted-foreground">
                       "Got my dream job at Microsoft thanks to my portfolio!"
                     </p>
-                    <p className="text-xs font-semibold mt-1">- Priya, Software Engineer</p>
+                    <p className="text-xs font-semibold mt-1">
+                      - Priya, Software Engineer
+                    </p>
                   </div>
                   <div className="border-l-2 border-primary/20 pl-4">
                     <p className="text-sm text-muted-foreground">
                       "The portfolio helped me stand out from 200+ applicants."
                     </p>
-                    <p className="text-xs font-semibold mt-1">- Rahul, Full Stack Developer</p>
+                    <p className="text-xs font-semibold mt-1">
+                      - Rahul, Full Stack Developer
+                    </p>
                   </div>
                 </CardContent>
               </Card>
