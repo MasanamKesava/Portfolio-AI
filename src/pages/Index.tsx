@@ -886,12 +886,7 @@ const Index = () => {
                 >
                   Terms of Service
                 </Link>
-                <Link
-                  to="https://www.termsfeed.com/live/49188121-f740-4aa8-8d64-6b9c19f8937b"
-                  className="text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
-                >
-                  Support
-                </Link>
+                
               </div>
             </div>
 
