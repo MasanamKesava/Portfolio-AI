@@ -872,7 +872,7 @@ const Index = () => {
               </div>
               <div className="flex gap-6 text-sm">
                 <Link
-                  to="#"
+                  to="https://www.termsfeed.com/live/0418e4b7-8655-40c9-b017-d176eea49a49"
                   className="text-muted-foreground hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                 >
                   Privacy Policy
