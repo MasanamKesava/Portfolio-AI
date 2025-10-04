@@ -307,22 +307,18 @@ const Register = () => {
               </p>
             </div>
 
-            {/* Spots — numbers with adaptive spacing and no layout shift */}
-            <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
-              {/* 1 / 10 Registered */}
-              <div className="flex items-baseline text-lg font-semibold">
-                <Num value={registeredCount} maxDigits={maxDigits} />
-                <span className="mx-1">/</span>
-                <Num value={limit} maxDigits={maxDigits} />
-                <span className="ml-2">Registered</span>
-              </div>
-
-              {/* Only 9 spots left! */}
-              <div className="text-accent font-bold text-lg flex items-baseline">
-                <span>Only&nbsp;</span>
-                <Num value={spotsLeft} maxDigits={maxDigits} />
-                <span>&nbsp;spots left!</span>
-              </div>
+            {/* Spots */}
+<div className="flex items-center justify-center gap-4 mb-8">
+  <div className="flex items-center gap-2">
+    <Users className="h-5 w-5 text-primary" />
+    <span className="text-lg font-semibold">
+      {registeredCount}/{limit} Registered
+    </span>
+  </div>
+  <div className="text-accent font-bold text-lg">
+    Only {spotsLeft} spots left!
+  </div>
+</div>
 
               {isAdmin && (
                 <div className="ml-4">
