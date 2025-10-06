@@ -14,8 +14,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import founderImage from "@/assets/founder-profile.png";
-
-/** Supabase client */
 import { supabase } from "@/lib/supabaseClient";
 
 const Contact = () => {
@@ -28,7 +26,7 @@ const Contact = () => {
     message: "",
   });
 
-  /** Validation */
+  /** ✅ Validate basic inputs */
   const validate = () => {
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
     const phoneOk = /^[0-9+\-\s()]{7,20}$/.test(formData.phone);
@@ -36,11 +34,11 @@ const Contact = () => {
     if (!emailOk) return "Please enter a valid email.";
     if (!phoneOk) return "Please enter a valid phone number.";
     if (formData.message.trim().length < 10)
-      return "Please provide a bit more detail in the message (min 10 characters).";
+      return "Please provide a bit more detail (min 10 characters).";
     return null;
   };
 
-  /** Handle submit: Supabase insert + optional FormSubmit email + redirect to /thank-you */
+  /** ✅ Handle submission (Supabase + FormSubmit + same-page refresh) */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -53,10 +51,9 @@ const Contact = () => {
 
     setIsSubmitting(true);
     try {
-      const userAgent =
-        typeof window !== "undefined" ? window.navigator.userAgent : null;
+      const userAgent = typeof window !== "undefined" ? window.navigator.userAgent : null;
 
-      // Save to Supabase
+      // Insert to Supabase
       const { error } = await supabase.from("contact_messages").insert([
         {
           name: formData.name,
@@ -68,7 +65,7 @@ const Contact = () => {
       ]);
       if (error) throw error;
 
-      // Optional: also send a copy to your FormSubmit inbox
+      // Optional: Email via FormSubmit (doesn’t redirect)
       try {
         const emailForm = new FormData();
         emailForm.append("name", formData.name);
@@ -77,18 +74,15 @@ const Contact = () => {
         emailForm.append("message", formData.message);
         emailForm.append("_template", "table");
         emailForm.append("_captcha", "false");
-        // Setting _next here has no effect when using fetch; we’ll redirect manually.
-        emailForm.append("_next", `${window.location.origin}/thank-you`);
 
         await fetch("https://formsubmit.co/masanamkesava@gmail.com", {
           method: "POST",
           body: emailForm,
         });
       } catch {
-        // ignore email failures so long as DB succeeded
+        // Ignore if email send fails
       }
 
-      // Tiny themed toast
       toast({
         title: "Message Sent! 🎉",
         description: "We’ll get back to you within 24 hours.",
@@ -98,13 +92,12 @@ const Contact = () => {
           "bg-primary text-primary-foreground ring-1 ring-primary/40 w-auto h-auto",
       });
 
-      // Reset + redirect to /thank-you (same tab)
       setFormData({ name: "", email: "", phone: "", message: "" });
+
+      // Refresh the same page after short delay
       setTimeout(() => {
-        if (typeof window !== "undefined") {
-          window.location.assign("/thank-you");
-        }
-      }, 400);
+        window.location.reload();
+      }, 1000);
     } catch (e: any) {
       console.error("Contact submit failed:", e);
       toast({
@@ -119,9 +112,7 @@ const Contact = () => {
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData((s) => ({ ...s, [e.target.name]: e.target.value }));
-  };
+  ) => setFormData((s) => ({ ...s, [e.target.name]: e.target.value }));
 
   const contactMethods = [
     {
@@ -207,10 +198,7 @@ const Contact = () => {
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label
-                          htmlFor="name"
-                          className="block text-sm font-medium mb-2"
-                        >
+                        <label htmlFor="name" className="block text-sm font-medium mb-2">
                           Full Name *
                         </label>
                         <Input
@@ -225,10 +213,7 @@ const Contact = () => {
                         />
                       </div>
                       <div>
-                        <label
-                          htmlFor="phone"
-                          className="block text-sm font-medium mb-2"
-                        >
+                        <label htmlFor="phone" className="block text-sm font-medium mb-2">
                           Phone Number *
                         </label>
                         <Input
@@ -245,10 +230,7 @@ const Contact = () => {
                     </div>
 
                     <div>
-                      <label
-                        htmlFor="email"
-                        className="block text-sm font-medium mb-2"
-                      >
+                      <label htmlFor="email" className="block text-sm font-medium mb-2">
                         Email Address *
                       </label>
                       <Input
@@ -264,10 +246,7 @@ const Contact = () => {
                     </div>
 
                     <div>
-                      <label
-                        htmlFor="message"
-                        className="block text-sm font-medium mb-2"
-                      >
+                      <label htmlFor="message" className="block text-sm font-medium mb-2">
                         Message *
                       </label>
                       <Textarea
@@ -295,9 +274,8 @@ const Contact = () => {
               </Card>
             </div>
 
-            {/* Contact Info Sidebar */}
+            {/* Sidebar */}
             <div className="space-y-8">
-              {/* Founder Card */}
               <Card className="glass-card border-0">
                 <CardContent className="p-6 text-center">
                   <img
@@ -396,8 +374,7 @@ const Contact = () => {
                   <Clock className="h-8 w-8 text-primary mx-auto mb-2" />
                   <h4 className="font-semibold mb-2">Quick Response Time</h4>
                   <p className="text-sm text-muted-foreground">
-                    We typically respond to all inquiries within 2-4 hours
-                    during business hours.
+                    We typically respond within 2–4 hours during business hours.
                   </p>
                 </CardContent>
               </Card>
@@ -429,13 +406,12 @@ const Contact = () => {
             </div>
           </section>
 
-          {/* Final CTA */}
+          {/* CTA */}
           <section className="py-12">
             <div className="glass-card p-8 rounded-3xl text-center">
               <h3 className="text-2xl font-bold mb-4">Ready to Get Started?</h3>
               <p className="text-muted-foreground mb-6">
-                Don't wait! The launch offer ends soon. Contact us now and
-                secure your spot.
+                Don’t wait! Contact us now and secure your spot.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
