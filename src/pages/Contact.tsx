@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import founderImage from "@/assets/founder-profile.png";
 
-/** ⬇️ ADD: import your already-configured Supabase client */
+/** Supabase client */
 import { supabase } from "@/lib/supabaseClient";
 
 const Contact = () => {
@@ -28,7 +28,7 @@ const Contact = () => {
     message: "",
   });
 
-  // ✅ HELPER: Basic validation (optional but recommended)
+  /** Validation */
   const validate = () => {
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
     const phoneOk = /^[0-9+\-\s()]{7,20}$/.test(formData.phone);
@@ -40,7 +40,7 @@ const Contact = () => {
     return null;
   };
 
-  // ⬇️ REPLACE your existing handleSubmit with this one
+  /** Handle submit: Supabase insert + optional FormSubmit email + redirect to /thank-you */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -56,22 +56,19 @@ const Contact = () => {
       const userAgent =
         typeof window !== "undefined" ? window.navigator.userAgent : null;
 
-      /** Option A: direct insert to table */
-      const { error } = await supabase
-        .from("contact_messages")
-        .insert([
-          {
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            message: formData.message,
-            user_agent: userAgent,
-          },
-        ]);
-
+      // Save to Supabase
+      const { error } = await supabase.from("contact_messages").insert([
+        {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          message: formData.message,
+          user_agent: userAgent,
+        },
+      ]);
       if (error) throw error;
 
-      // (Optional) also send an email copy via FormSubmit (keeps your current flow)
+      // Optional: also send a copy to your FormSubmit inbox
       try {
         const emailForm = new FormData();
         emailForm.append("name", formData.name);
@@ -80,28 +77,39 @@ const Contact = () => {
         emailForm.append("message", formData.message);
         emailForm.append("_template", "table");
         emailForm.append("_captcha", "false");
+        // Setting _next here has no effect when using fetch; we’ll redirect manually.
+        emailForm.append("_next", `${window.location.origin}/thank-you`);
 
         await fetch("https://formsubmit.co/masanamkesava@gmail.com", {
           method: "POST",
           body: emailForm,
         });
       } catch {
-        // Ignore email errors so DB success still shows success to the user
+        // ignore email failures so long as DB succeeded
       }
 
+      // Tiny themed toast
       toast({
-        title: "Message Sent Successfully! 🎉",
-        description:
-          "Thanks for reaching out. We’ll get back to you within 24 hours.",
+        title: "Message Sent! 🎉",
+        description: "We’ll get back to you within 24 hours.",
+        duration: 2000,
+        className:
+          "fixed bottom-4 right-4 text-xs font-medium px-2.5 py-1.5 rounded-md shadow-lg " +
+          "bg-primary text-primary-foreground ring-1 ring-primary/40 w-auto h-auto",
       });
 
+      // Reset + redirect to /thank-you (same tab)
       setFormData({ name: "", email: "", phone: "", message: "" });
-    } catch (err: any) {
-      console.error("Contact submit failed:", err);
+      setTimeout(() => {
+        if (typeof window !== "undefined") {
+          window.location.assign("/thank-you");
+        }
+      }, 400);
+    } catch (e: any) {
+      console.error("Contact submit failed:", e);
       toast({
         title: "Couldn’t send your message",
-        description:
-          err?.message || "Something went wrong. Please try again shortly.",
+        description: e?.message || "Something went wrong. Please try again shortly.",
         variant: "destructive",
       });
     } finally {
@@ -144,14 +152,26 @@ const Contact = () => {
   ];
 
   const faqs = [
-    { question: "How quickly can I get my portfolio ready?",
-      answer: "Most portfolios are completed within 2-3 business days. Rush orders can be delivered within 24 hours." },
-    { question: "Do you provide resume writing services?",
-      answer: "Yes! We offer AI-powered resume analysis and custom resume writing services optimized for ATS systems." },
-    { question: "Can you help with placement preparation?",
-      answer: "Absolutely! We provide interview preparation, coding practice resources, and placement readiness tracking." },
-    { question: "What's included in the ₹1999 package?",
-      answer: "Complete portfolio website, AI resume analysis, GitHub integration, and 3 months of support." },
+    {
+      question: "How quickly can I get my portfolio ready?",
+      answer:
+        "Most portfolios are completed within 2-3 business days. Rush orders can be delivered within 24 hours.",
+    },
+    {
+      question: "Do you provide resume writing services?",
+      answer:
+        "Yes! We offer AI-powered resume analysis and custom resume writing services optimized for ATS systems.",
+    },
+    {
+      question: "Can you help with placement preparation?",
+      answer:
+        "Absolutely! We provide interview preparation, coding practice resources, and placement readiness tracking.",
+    },
+    {
+      question: "What's included in the ₹1999 package?",
+      answer:
+        "Complete portfolio website, AI resume analysis, GitHub integration, and 3 months of support.",
+    },
   ];
 
   return (
@@ -187,7 +207,10 @@ const Contact = () => {
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label htmlFor="name" className="block text-sm font-medium mb-2">
+                        <label
+                          htmlFor="name"
+                          className="block text-sm font-medium mb-2"
+                        >
                           Full Name *
                         </label>
                         <Input
@@ -202,7 +225,10 @@ const Contact = () => {
                         />
                       </div>
                       <div>
-                        <label htmlFor="phone" className="block text-sm font-medium mb-2">
+                        <label
+                          htmlFor="phone"
+                          className="block text-sm font-medium mb-2"
+                        >
                           Phone Number *
                         </label>
                         <Input
@@ -219,7 +245,10 @@ const Contact = () => {
                     </div>
 
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium mb-2">
+                      <label
+                        htmlFor="email"
+                        className="block text-sm font-medium mb-2"
+                      >
                         Email Address *
                       </label>
                       <Input
@@ -235,7 +264,10 @@ const Contact = () => {
                     </div>
 
                     <div>
-                      <label htmlFor="message" className="block text-sm font-medium mb-2">
+                      <label
+                        htmlFor="message"
+                        className="block text-sm font-medium mb-2"
+                      >
                         Message *
                       </label>
                       <Textarea
@@ -250,10 +282,6 @@ const Contact = () => {
                       />
                     </div>
 
-                    {/* If you keep FormSubmit fallback above, these help format the email */}
-                    <input type="hidden" name="_template" value="table" />
-                    <input type="hidden" name="_captcha" value="false" />
-
                     <Button
                       type="submit"
                       disabled={isSubmitting}
@@ -267,8 +295,9 @@ const Contact = () => {
               </Card>
             </div>
 
-            {/* Right sidebar retained (unchanged) */}
+            {/* Contact Info Sidebar */}
             <div className="space-y-8">
+              {/* Founder Card */}
               <Card className="glass-card border-0">
                 <CardContent className="p-6 text-center">
                   <img
@@ -285,14 +314,26 @@ const Contact = () => {
                     client expertise
                   </p>
                   <div className="flex justify-center space-x-2">
-                    <Button size="sm" asChild className="bg-gradient-primary hover:opacity-90 text-white">
+                    <Button
+                      size="sm"
+                      asChild
+                      className="bg-gradient-primary hover:opacity-90 text-white"
+                    >
                       <a href="tel:9059086142">
                         <Phone className="h-4 w-4 mr-1" />
                         Call
                       </a>
                     </Button>
-                    <Button size="sm" asChild className="bg-gradient-accent hover:opacity-90 text-white">
-                      <a href="https://wa.me/9059086142" target="_blank" rel="noopener noreferrer">
+                    <Button
+                      size="sm"
+                      asChild
+                      className="bg-gradient-accent hover:opacity-90 text-white"
+                    >
+                      <a
+                        href="https://wa.me/9059086142"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <MessageCircle className="h-4 w-4 mr-1" />
                         Chat
                       </a>
@@ -301,8 +342,55 @@ const Contact = () => {
                 </CardContent>
               </Card>
 
-              {/* contactMethods + response-time cards ... (unchanged) */}
-              {/* ... keep your existing JSX here ... */}
+              {/* Contact Methods */}
+              <div className="space-y-4">
+                {contactMethods.map((method, index) => (
+                  <Card key={index} className="glass-card border-0 hover-lift">
+                    <CardContent className="p-4">
+                      <div className="flex items-start space-x-4">
+                        <div
+                          className={`w-12 h-12 rounded-lg bg-gradient-to-r ${method.color} flex items-center justify-center text-white flex-shrink-0`}
+                        >
+                          {method.icon}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold mb-1">{method.title}</h4>
+                          <p className="text-sm text-primary mb-1">
+                            {method.detail}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {method.description}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          asChild
+                          className="glass-button"
+                        >
+                          <a
+                            href={method.action}
+                            target={
+                              method.action.startsWith("http")
+                                ? "_blank"
+                                : undefined
+                            }
+                            rel={
+                              method.action.startsWith("http")
+                                ? "noopener noreferrer"
+                                : undefined
+                            }
+                          >
+                            Contact
+                          </a>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Response Time */}
               <Card className="glass-card border-0">
                 <CardContent className="p-4 text-center">
                   <Clock className="h-8 w-8 text-primary mx-auto mb-2" />
@@ -316,7 +404,65 @@ const Contact = () => {
             </div>
           </div>
 
-          {/* FAQ + CTA sections ... (unchanged) */}
+          {/* FAQ Section */}
+          <section className="py-16">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-bold mb-4">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-xl text-muted-foreground">
+                Quick answers to common questions
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {faqs.map((faq, index) => (
+                <Card key={index} className="glass-card border-0 hover-lift">
+                  <CardContent className="p-6">
+                    <h4 className="font-semibold mb-3 text-primary">
+                      {faq.question}
+                    </h4>
+                    <p className="text-muted-foreground">{faq.answer}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          {/* Final CTA */}
+          <section className="py-12">
+            <div className="glass-card p-8 rounded-3xl text-center">
+              <h3 className="text-2xl font-bold mb-4">Ready to Get Started?</h3>
+              <p className="text-muted-foreground mb-6">
+                Don't wait! The launch offer ends soon. Contact us now and
+                secure your spot.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  asChild
+                  className="bg-gradient-primary hover:opacity-90 text-white shadow-glow"
+                >
+                  <a
+                    href="https://wa.me/9059086142"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Start WhatsApp Chat
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  className="bg-gradient-accent hover:opacity-90 text-white"
+                >
+                  <a href="tel:9059086142">
+                    <Phone className="mr-2 h-4 w-4" />
+                    Call Now: 9059086142
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>
@@ -324,4 +470,3 @@ const Contact = () => {
 };
 
 export default Contact;
-
