@@ -8,10 +8,12 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Navbar from "@/components/Navbar";
 
 /** Lightweight, dependency-free carousel */
@@ -111,37 +113,30 @@ function Carousel<T>({
   );
 }
 
-/** Flip card for small gallery items (hover desktop, tap mobile) */
-function FlipCard({
+/** Gallery card that opens a preview dialog */
+function GalleryCard({
   title,
   image,
   tag,
   driveUrl,
+  onPreview,
 }: {
   title: string;
   image: string;
   tag?: string;
   driveUrl: string;
+  onPreview: () => void;
 }) {
-  const [flipped, setFlipped] = useState(false);
-  const toggle = () => setFlipped((f) => !f);
-
   return (
-    <div className="group [perspective:1000px]">
-      <div
-        className={`relative h-48 rounded-xl overflow-hidden transition-transform duration-500 [transform-style:preserve-3d] cursor-pointer ${
-          flipped ? "[transform:rotateY(180deg)]" : ""
-        } group-hover:[transform:rotateY(180deg)]`}
-        onClick={toggle}
-      >
-        {/* front */}
-        <div className="absolute inset-0 [backface-visibility:hidden]">
+    <div className="group">
+      <Card className="glass-card border-0 overflow-hidden h-full hover-lift cursor-pointer" onClick={onPreview}>
+        <div className="relative h-48">
           <img
             src={image}
             alt={title}
             loading="lazy"
             decoding="async"
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             onError={(e) => {
               const el = e.currentTarget as HTMLImageElement;
               el.onerror = null;
@@ -149,34 +144,48 @@ function FlipCard({
                 "https://via.placeholder.com/800x500?text=Resume+Example";
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent" />
-          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-            <div className="text-white text-sm font-medium">{title}</div>
-            {tag && <Badge className="bg-primary text-white">{tag}</Badge>}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          {tag && (
+            <div className="absolute top-2 right-2">
+              <Badge className="bg-primary text-white">{tag}</Badge>
+            </div>
+          )}
+          <div className="absolute bottom-0 left-0 right-0 p-3">
+            <div className="text-white text-sm font-medium mb-2">{title}</div>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="flex-1 text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPreview();
+                }}
+              >
+                Preview
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="text-xs"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <a href={driveUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </Button>
+            </div>
           </div>
         </div>
-        {/* back */}
-        <div className="absolute inset-0 bg-background/90 glass-card p-4 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col items-center justify-center gap-3">
-          <div className="text-sm font-semibold text-center">{title}</div>
-          <Button
-            variant="outline"
-            size="sm"
-            asChild
-            className="glass-button"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <a href={driveUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4 mr-1" />
-              View on Drive
-            </a>
-          </Button>
-        </div>
-      </div>
+      </Card>
     </div>
   );
 }
 
 const ResumeBuilder = () => {
+  const [previewImage, setPreviewImage] = useState<{ title: string; image: string } | null>(null);
+
   // Centralized Google Drive link
   const driveUrl =
     "https://drive.google.com/drive/folders/1tbzQFRj5RSbcdUdDYDnqLH8--n0G36Ih?usp=drive_link";
@@ -496,66 +505,45 @@ const ResumeBuilder = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[
-              {
-                title: "Latex Professional",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574498/imgi_321_latex_templates_resumelab_11_hsyccb.jpg",
-                tag: "ATS",
-              },
-              {
-                title: "Executive Assistant",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574496/imgi_289_resume_executive_assistant_xg742k.png",
-                tag: "Executive",
-              },
-              {
-                title: "Modern Professional (1)",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574495/imgi_286_canva-modern-professional-cv-resume-zveo1XzOLKo_zw1x4a.jpg",
-                tag: "Modern",
-              },
-              {
-                title: "Modern Professional (2)",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574493/imgi_281_canva-modern-professional-cv-resume-RZAonb9ZjgE_kw43vb.jpg",
-                tag: "Modern",
-              },
-              {
-                title: "ATS Clean Layout",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574491/imgi_193_68cd086b8c2ec2e8c2c54480_Screenshot_2025-09-19_at_1.05.12_PM_advqoe.png",
-                tag: "ATS",
-              },
-              {
-                title: "Minimalist (WebP 1)",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574487/imgi_119_LmpwZWc_m8xbxn.webp",
-                tag: "Minimal",
-              },
-              {
-                title: "Minimalist (WebP 2)",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574486/imgi_97_ajRjLmpwZw_j5gmil.webp",
-                tag: "Minimal",
-              },
-              {
-                title: "Sleek Monochrome",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574484/imgi_81_MTJiNmQzOGE_trwbky.webp",
-                tag: "Sleek",
-              },
-            ].map((g, i) => (
-              <FlipCard
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {gallery.map((g, i) => (
+              <GalleryCard
                 key={i}
                 title={g.title}
                 image={g.image}
                 tag={g.tag}
                 driveUrl={driveUrl}
+                onPreview={() => setPreviewImage({ title: g.title, image: g.image })}
               />
             ))}
           </div>
+
+          {/* Preview Dialog */}
+          <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+              <DialogHeader>
+                <DialogTitle>{previewImage?.title}</DialogTitle>
+              </DialogHeader>
+              <div className="relative">
+                <img
+                  src={previewImage?.image}
+                  alt={previewImage?.title}
+                  className="w-full h-auto rounded-lg"
+                />
+                <div className="mt-4 flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setPreviewImage(null)}>
+                    Close
+                  </Button>
+                  <Button asChild>
+                    <a href={driveUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      View on Drive
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </section>
 
