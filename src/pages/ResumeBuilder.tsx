@@ -8,6 +8,8 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
+  X,
+  ZoomIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,65 +113,67 @@ function Carousel<T>({
   );
 }
 
-/** Flip card for small gallery items (hover desktop, tap mobile) */
-function FlipCard({
+/** Simple image preview modal (lightbox) */
+function ImagePreviewModal({
+  open,
+  src,
   title,
-  image,
-  tag,
-  driveUrl,
+  onClose,
 }: {
-  title: string;
-  image: string;
-  tag?: string;
-  driveUrl: string;
+  open: boolean;
+  src: string | null;
+  title?: string;
+  onClose: () => void;
 }) {
-  const [flipped, setFlipped] = useState(false);
-  const toggle = () => setFlipped((f) => !f);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open || !src) return null;
 
   return (
-    <div className="group [perspective:1000px]">
-      <div
-        className={`relative h-48 rounded-xl overflow-hidden transition-transform duration-500 [transform-style:preserve-3d] cursor-pointer ${
-          flipped ? "[transform:rotateY(180deg)]" : ""
-        } group-hover:[transform:rotateY(180deg)]`}
-        onClick={toggle}
-      >
-        {/* front */}
-        <div className="absolute inset-0 [backface-visibility:hidden]">
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title ?? "Preview"}
+      onClick={(e) => {
+        if (e.target === overlayRef.current) onClose();
+      }}
+    >
+      <div className="relative max-w-5xl w-full">
+        <button
+          aria-label="Close preview"
+          onClick={onClose}
+          className="absolute -top-10 right-0 text-white/90 hover:text-white"
+        >
+          <X className="h-7 w-7" />
+        </button>
+        <div className="rounded-xl overflow-hidden bg-background">
           <img
-            src={image}
-            alt={title}
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-cover"
+            src={src}
+            alt={title || "Preview"}
+            className="w-full h-auto max-h-[80vh] object-contain bg-black"
             onError={(e) => {
               const el = e.currentTarget as HTMLImageElement;
               el.onerror = null;
               el.src =
-                "https://via.placeholder.com/800x500?text=Resume+Example";
+                "https://via.placeholder.com/1600x1000?text=Preview+Unavailable";
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent" />
-          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-            <div className="text-white text-sm font-medium">{title}</div>
-            {tag && <Badge className="bg-primary text-white">{tag}</Badge>}
-          </div>
-        </div>
-        {/* back */}
-        <div className="absolute inset-0 bg-background/90 glass-card p-4 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col items-center justify-center gap-3">
-          <div className="text-sm font-semibold text-center">{title}</div>
-          <Button
-            variant="outline"
-            size="sm"
-            asChild
-            className="glass-button"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <a href={driveUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4 mr-1" />
-              View on Drive
-            </a>
-          </Button>
+          {title && (
+            <div className="p-3 text-center text-sm text-muted-foreground bg-background">
+              {title}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -177,11 +181,9 @@ function FlipCard({
 }
 
 const ResumeBuilder = () => {
-  // Centralized Google Drive link
   const driveUrl =
     "https://drive.google.com/drive/folders/1tbzQFRj5RSbcdUdDYDnqLH8--n0G36Ih?usp=drive_link";
 
-  // UPDATED: Use your Cloudinary images for Popular Templates
   const resumeTemplates = useMemo(
     () => [
       {
@@ -192,12 +194,7 @@ const ResumeBuilder = () => {
           "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574498/imgi_321_latex_templates_resumelab_11_hsyccb.jpg",
         description:
           "Clean, professional resume optimized for ATS with high success rate.",
-        features: [
-          "ATS Compatible",
-          "Clean Layout",
-          "Industry Standard",
-          "Easy Editing",
-        ],
+        features: ["ATS Compatible", "Clean Layout", "Industry Standard", "Easy Editing"],
         rating: 4.9,
         downloads: 15000,
         gradient: "from-blue-500 to-cyan-600",
@@ -208,14 +205,8 @@ const ResumeBuilder = () => {
         category: "Creative",
         image:
           "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574495/imgi_286_canva-modern-professional-cv-resume-zveo1XzOLKo_zw1x4a.jpg",
-        description:
-          "Modern creative resume template for designers and visual roles.",
-        features: [
-          "Visual Appeal",
-          "Color Schemes",
-          "Portfolio Integration",
-          "Creative Layout",
-        ],
+        description: "Modern creative resume template for designers and visual roles.",
+        features: ["Visual Appeal", "Color Schemes", "Portfolio Integration", "Creative Layout"],
         rating: 4.8,
         downloads: 8500,
         gradient: "from-purple-500 to-pink-600",
@@ -226,14 +217,8 @@ const ResumeBuilder = () => {
         category: "Technology",
         image:
           "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574486/imgi_97_ajRjLmpwZw_j5gmil.webp",
-        description:
-          "Technical resume template showcasing skills and projects effectively.",
-        features: [
-          "Skills Highlight",
-          "Project Showcase",
-          "GitHub Integration",
-          "Tech Stack",
-        ],
+        description: "Technical resume template showcasing skills and projects effectively.",
+        features: ["Skills Highlight", "Project Showcase", "GitHub Integration", "Tech Stack"],
         rating: 4.9,
         downloads: 12000,
         gradient: "from-green-500 to-teal-600",
@@ -244,14 +229,8 @@ const ResumeBuilder = () => {
         category: "Executive",
         image:
           "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574496/imgi_289_resume_executive_assistant_xg742k.png",
-        description:
-          "Premium executive resume for senior/leadership positions.",
-        features: [
-          "Executive Format",
-          "Achievement Focus",
-          "Leadership Skills",
-          "Premium Design",
-        ],
+        description: "Premium executive resume for senior/leadership positions.",
+        features: ["Executive Format", "Achievement Focus", "Leadership Skills", "Premium Design"],
         rating: 4.7,
         downloads: 6500,
         gradient: "from-orange-500 to-red-600",
@@ -260,15 +239,7 @@ const ResumeBuilder = () => {
     []
   );
 
-  // Map template -> sample portfolio page
-  const templatePortfolioMap: Record<number, number> = {
-    1: 1,
-    2: 2,
-    3: 3,
-    4: 1,
-  };
-
-  const gallery = useMemo(
+  const examplesGallery = useMemo(
     () => [
       {
         title: "Latex Professional",
@@ -322,15 +293,31 @@ const ResumeBuilder = () => {
     []
   );
 
+  // Preview modal state
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  const [previewTitle, setPreviewTitle] = useState<string | undefined>(undefined);
+
+  const openPreview = (src: string, title?: string) => {
+    setPreviewSrc(src);
+    setPreviewTitle(title);
+    setPreviewOpen(true);
+  };
+  const closePreview = () => {
+    setPreviewOpen(false);
+    setPreviewSrc(null);
+    setPreviewTitle(undefined);
+  };
+
   return (
     <div className="min-h-screen">
       <Navbar />
 
       {/* Header */}
-      <section className="pt-20 pb-10 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
-            Resume Builder
+      <section className="py-36 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto text-center">
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+              Resume Builder
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Create ATS-friendly resumes that get you noticed. Pick a template,
@@ -339,16 +326,11 @@ const ResumeBuilder = () => {
 
           {/* Google Drive Button */}
           <div className="glass-card p-6 rounded-2xl max-w-3xl mx-auto mb-10">
-            <h3 className="text-xl font-semibold mb-2">
-              📁 Browse All Resume Examples
-            </h3>
+            <h3 className="text-xl font-semibold mb-2">📁 Browse All Resume Examples</h3>
             <p className="text-muted-foreground mb-4">
               See full examples, variations, and formats stored on Google Drive.
             </p>
-            <Button
-              asChild
-              className="bg-gradient-primary hover:opacity-90 text-white shadow-glow"
-            >
+            <Button asChild className="bg-gradient-primary hover:opacity-90 text-white shadow-glow">
               <a href={driveUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="mr-2 h-4 w-4" />
                 View Resume Examples (Google Drive)
@@ -359,7 +341,7 @@ const ResumeBuilder = () => {
       </section>
 
       {/* Templates Carousel */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-6">
+      <section className="px-2 sm:px-6 lg:px-8 pb-6">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold mb-4">Popular Templates</h2>
           <Carousel
@@ -383,30 +365,22 @@ const ResumeBuilder = () => {
                       }}
                     />
                     <div className="absolute top-4 left-4">
-                      <Badge
-                        className={`bg-gradient-to-r ${template.gradient} text-white`}
-                      >
+                      <Badge className={`bg-gradient-to-r ${template.gradient} text-white`}>
                         {template.category}
                       </Badge>
                     </div>
                     <div className="absolute top-4 right-4 glass-card p-2 rounded-lg">
                       <div className="flex items-center space-x-1">
                         <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-semibold">
-                          {template.rating}
-                        </span>
+                        <span className="text-sm font-semibold">{template.rating}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="p-6 lg:p-8 flex flex-col justify-center">
                     <CardHeader className="p-0">
-                      <CardTitle className="text-2xl font-bold mb-2">
-                        {template.name}
-                      </CardTitle>
-                      <p className="text-muted-foreground mb-4">
-                        {template.description}
-                      </p>
+                      <CardTitle className="text-2xl font-bold mb-2">{template.name}</CardTitle>
+                      <p className="text-muted-foreground mb-4">{template.description}</p>
                       <div className="flex items-center gap-6 text-sm text-muted-foreground mb-4">
                         <div className="flex items-center">
                           <Download className="h-4 w-4 mr-1" />
@@ -431,7 +405,6 @@ const ResumeBuilder = () => {
                         ))}
                       </div>
 
-                      {/* Actions: Use Template • View Sample Portfolio (new tab) • Drive */}
                       <div className="flex flex-col sm:flex-row gap-3">
                         <Button className="flex-1 bg-gradient-primary hover:opacity-90 text-white">
                           <FileText className="mr-2 h-4 w-4" />
@@ -440,20 +413,12 @@ const ResumeBuilder = () => {
                             href={driveUrl}
                             target="_blank"
                             rel="noopener noreferrer"
+                            className="ml-2"
+                            title="Open on Drive"
                           >
                             <ExternalLink className="h-4 w-4" />
                           </a>
                         </Button>
-
-                        {/* <Button asChild variant="outline" className="glass-button flex-1 sm:flex-none">
-                          <Link
-                            to={`/sample-portfolio/${templatePortfolioMap[template.id] ?? 1}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            View Sample Portfolio
-                          </Link>
-                        </Button> */}
 
                         <Button
                           variant="outline"
@@ -462,11 +427,7 @@ const ResumeBuilder = () => {
                           className="glass-button"
                           title="Open examples on Drive"
                         >
-                          <a
-                            href={driveUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
+                          <a href={driveUrl} target="_blank" rel="noopener noreferrer">
                             <ExternalLink className="h-4 w-4" />
                           </a>
                         </Button>
@@ -480,80 +441,54 @@ const ResumeBuilder = () => {
         </div>
       </section>
 
-      {/* Mini Flip Gallery */}
-      <section className="px-4 sm:px-6 lg:px-8 py-12">
+      {/* Examples Gallery — CARDS only; click the card to preview; no extra buttons/links */}
+      <section className="pt-20 px-4 sm:px-6 lg:px-8 pb-12">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-end justify-between mb-6">
+          <div className="mb-6">
             <h2 className="text-3xl font-bold">Examples Gallery</h2>
-            <Button
-              asChild
-              className="bg-gradient-primary hover:opacity-90 text-white shadow-glow"
-            >
-              <a href={driveUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="mr-2 h-4 w-4" />
-                View All on Google Drive
-              </a>
-            </Button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[
-              {
-                title: "Latex Professional",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574498/imgi_321_latex_templates_resumelab_11_hsyccb.jpg",
-                tag: "ATS",
-              },
-              {
-                title: "Executive Assistant",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574496/imgi_289_resume_executive_assistant_xg742k.png",
-                tag: "Executive",
-              },
-              {
-                title: "Modern Professional (1)",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574495/imgi_286_canva-modern-professional-cv-resume-zveo1XzOLKo_zw1x4a.jpg",
-                tag: "Modern",
-              },
-              {
-                title: "Modern Professional (2)",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574493/imgi_281_canva-modern-professional-cv-resume-RZAonb9ZjgE_kw43vb.jpg",
-                tag: "Modern",
-              },
-              {
-                title: "ATS Clean Layout",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574491/imgi_193_68cd086b8c2ec2e8c2c54480_Screenshot_2025-09-19_at_1.05.12_PM_advqoe.png",
-                tag: "ATS",
-              },
-              {
-                title: "Minimalist (WebP 1)",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574487/imgi_119_LmpwZWc_m8xbxn.webp",
-                tag: "Minimal",
-              },
-              {
-                title: "Minimalist (WebP 2)",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574486/imgi_97_ajRjLmpwZw_j5gmil.webp",
-                tag: "Minimal",
-              },
-              {
-                title: "Sleek Monochrome",
-                image:
-                  "https://res.cloudinary.com/dswrgvg3c/image/upload/v1758574484/imgi_81_MTJiNmQzOGE_trwbky.webp",
-                tag: "Sleek",
-              },
-            ].map((g, i) => (
-              <FlipCard
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5">
+            {examplesGallery.map((g, i) => (
+              <Card
                 key={i}
-                title={g.title}
-                image={g.image}
-                tag={g.tag}
-                driveUrl={driveUrl}
-              />
+                className="overflow-hidden hover:shadow-lg transition-shadow glass-card cursor-pointer"
+                onClick={() => openPreview(g.image, g.title)}
+                aria-label={`Preview ${g.title}`}
+              >
+                <div className="relative h-44 group">
+                  <img
+                    src={g.image}
+                    alt={g.title}
+                    loading="lazy"
+                    decoding="async"
+                    className="h-full w-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                    onError={(e) => {
+                      const el = e.currentTarget as HTMLImageElement;
+                      el.onerror = null;
+                      el.src =
+                        "https://via.placeholder.com/800x500?text=Resume+Example";
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-90" />
+                  <div className="absolute top-2 left-2">
+                    {g.tag && (
+                      <Badge className="bg-primary text-white shadow">
+                        {g.tag}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                    <div className="text-white text-sm font-medium line-clamp-1">
+                      {g.title}
+                    </div>
+                    <span className="inline-flex items-center gap-1 text-white/90 text-xs bg-black/30 px-2 py-1 rounded-md">
+                      <ZoomIn className="h-3.5 w-3.5" />
+                      Preview
+                    </span>
+                  </div>
+                </div>
+              </Card>
             ))}
           </div>
         </div>
@@ -563,22 +498,13 @@ const ResumeBuilder = () => {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <div className="glass-card p-12 rounded-3xl">
-            <h2 className="text-4xl font-bold mb-6">
-              Ready to Build Your Resume?
-            </h2>
+            <h2 className="text-4xl font-bold mb-6">Ready to Build Your Resume?</h2>
             <p className="text-xl text-muted-foreground mb-8">
-              Start with our AI-powered builder and create a resume that stands
-              out.
+              Start with our AI-powered builder and create a resume that stands out.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {/* <Button className="bg-gradient-primary hover:opacity-90 text-white shadow-glow text-lg px-8 py-4">
-                Start Building Resume
-              </Button> */}
               <Link to="/contact">
-                <Button
-                  variant="outline"
-                  className="glass-button text-lg px-8 py-4"
-                >
+                <Button variant="outline" className="glass-button text-lg px-8 py-4">
                   Get Expert Help
                 </Button>
               </Link>
@@ -586,6 +512,14 @@ const ResumeBuilder = () => {
           </div>
         </div>
       </section>
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        open={previewOpen}
+        src={previewSrc}
+        title={previewTitle}
+        onClose={closePreview}
+      />
     </div>
   );
 };
